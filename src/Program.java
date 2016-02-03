@@ -32,6 +32,8 @@ public class Program
     public static String PRINT = "print";
     public static String PRINTNEWLINE = "printNL";
     public static String EVALUATEEXPRESSION = "eval";
+    public static String STARTIF = "if";
+    public static String ENDIF = "endIf";
     
     public Program(String code)
     {
@@ -118,17 +120,31 @@ public class Program
 	    }
 	    
 	    //GETS
-	    if(!programFinished & condition_lineGets(currentLine))
+	    while(!programFinished & condition_lineGets(currentLine))
 	    {
 		String name = "";
 		int index = -1;
+		int secondSpaceIndex = -1;
 	
 		for(int i = 0; i < code_code[currentLine].length() - GET.length(); i++)
 		{
 		    if(code_code[currentLine].substring(i, i + GET.length()).equals(GET))
 		    {
 			index = i;
-			name = code_code[currentLine].substring(i + GET.length() + 1);
+			
+			for(int j = index + 1; j < code_code[currentLine].length(); j++)
+			{
+			    if(code_code[currentLine].charAt(j) == ' ')
+			    {
+				secondSpaceIndex = j;
+				j = code_code[currentLine].length();
+			    }
+			}
+			
+			//magic
+			secondSpaceIndex += 2;
+			
+			name = code_code[currentLine].substring(i + GET.length() + 1, secondSpaceIndex);
 		    }
 		}
 	
@@ -442,7 +458,46 @@ public class Program
 	    {
 		GUIHandler.update_output("\n");
 	    }
-
+	    
+	    //IF
+	    if(!programFinished & condition_lineStartsIf(currentLine))
+	    {
+		String value1 = "";
+		String value2 = "";
+		
+		for(int i = STARTIF.length() + 1; i < code_code[currentLine].length(); i++)
+		{
+		    if(code_code[currentLine].charAt(i) == ' ')
+		    {
+			value1 = code_code[currentLine].substring(STARTIF.length() + 1, i);
+			value2 = code_code[currentLine].substring(i + 1);
+		    }
+		}
+		
+		if(value1.equals(value2))
+		{
+		    //do nothing, continue the code as normal
+		}
+		else
+		{
+		    for(int i = currentLine; i < code_numberOfLines; i++)
+		    {
+			if(condition_lineEndsIf(i))
+			{
+			    currentLine = i;
+			    i = code_numberOfLines;
+			}
+			
+			if(i == code_numberOfLines - 1)
+			{
+			    error_throwError(currentLine, "Could not find endIf statement");
+			    programFinished = true;
+			    error = true;
+			}
+		    }
+		}
+	    }
+	    
 	    GUIHandler.update_variables_clear();
 	    
 	    for(int i = 0; i < var_variables.length; i++)
@@ -633,6 +688,30 @@ public class Program
     private boolean condition_lineEvaluates(int line)
     {
     	if(code_code[line].contains(EVALUATEEXPRESSION))
+    	{
+    	    return true;
+    	}
+    	else
+    	{
+    	    return false;
+    	}
+    }
+    
+    private boolean condition_lineStartsIf(int line)
+    {
+	if(code_code[line].startsWith(STARTIF))
+    	{
+    	    return true;
+    	}
+    	else
+    	{
+    	    return false;
+    	}
+    }
+    
+    private boolean condition_lineEndsIf(int line)
+    {
+	if(code_code[line].equals(ENDIF))
     	{
     	    return true;
     	}
