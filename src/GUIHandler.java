@@ -8,7 +8,7 @@ public class GUIHandler
 {
     //initialize frame
     private static JFrame mainFrame;
-    
+
     //initialize components
     private static JTextArea component_input;
     private static JTextArea component_output;
@@ -16,20 +16,20 @@ public class GUIHandler
     private static JScrollPane component_inputScrollPane;
     private static JScrollPane component_outputScrollPane;
     private static JScrollPane component_variablesScrollPane;
-    
+
     //initialize constraints
     private static GridBagConstraints constraints_input;
     private static GridBagConstraints constraints_output;
     private static GridBagConstraints constraints_variables;
-    
+
     //initialize menu
     private static JMenuBar menu_mainBar;
-    
+
     private static JMenu menu_file;
     private static JMenu menu_file_new;
     private static JMenu menu_edit;
     private static JMenu menu_program;
-    
+
     private static JMenuItem menu_file_save;
     private static JMenuItem menu_file_saveas;
     private static JMenuItem menu_file_open;
@@ -39,28 +39,28 @@ public class GUIHandler
     private static JMenuItem menu_program_stepbystep;
     private static JMenuItem menu_program_previousstep;    
     private static JMenuItem menu_program_nextstep;
-    
+
     //initialize inputs
     public static String component_output_text = "";
     public static String component_variables_text = "";
-    
+
     //initialize programs
     private static Program currentProgram;
-    
+
     public static void main(String[] args)
     {
         //instantiate frame
         instantiate_frame();
-    
+
         //instantiate component variables
         instantiate_components();
-    
+
         //instantiate menu variables
         instantiate_menu();
-    
+
         //instantiate constraints
         instantiate_constraints();
-    
+
         //build frame and show it
         instantiate_finalize();
     }
