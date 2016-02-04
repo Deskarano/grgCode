@@ -30,10 +30,12 @@ public class Program
     public static String GET = "get";
     public static String DELETE = "delete";
     public static String PRINT = "print";
-    public static String PRINTNEWLINE = "printNewLine";
+    public static String PRINTNEWLINE = "printNL";
     public static String EVALUATEEXPRESSION = "eval";
     public static String STARTIF = "if";
     public static String ENDIF = "endIf";
+    public static String STARTWHILE = "while";
+    public static String ENDWHILE = "endWhile";
     
     public Program(String code)
     {
@@ -126,36 +128,29 @@ public class Program
                 int index = -1;
                 int secondSpaceIndex = -1;
         
-                for(int i = 0; i < code_code[currentLine].length() - GET.length(); i++)
-                {
-                	index = code_code[currentLine].indexOf(GET);
-                	secondSpaceIndex = code_code[currentLine].indexOf(' ', index + GET.length() + 1);
-                	
-                	if(secondSpaceIndex == -1)
-                	{
-                		name = code_code[currentLine].substring(index + GET.length() + 1);
-                	}
-                	else
-                	{
-                		name = code_code[currentLine].substring(index + GET.length() + 1, secondSpaceIndex);
-                	}
-                }
+                index = code_code[currentLine].indexOf(GET);
+                secondSpaceIndex = code_code[currentLine].indexOf(' ', index + GET.length() + 1);                
+
+                if(secondSpaceIndex == -1)
+        	{
+                    name = code_code[currentLine].substring(index + GET.length() + 1);
+        	}
+        	else
+        	{
+        	    name = code_code[currentLine].substring(index + GET.length() + 1, secondSpaceIndex);
+        	}
         
                 if(var_DATA.nameIsPresent(name))
                 {
-                    String part1 = code_code[currentLine].substring(0, index);
-                    String part2 = "";
+                    String firstHalf = code_code[currentLine].substring(0, index);
+                    String secondHalf = "";
                     
-                    if(secondSpaceIndex == -1)
+                    if(!(secondSpaceIndex == -1))
                     {
-                    	//do nothing
-                    }
-                    else
-                    {
-                        part2 = code_code[currentLine].substring(secondSpaceIndex);
+                        secondHalf = code_code[currentLine].substring(secondSpaceIndex);
                     }
                     
-                    code_code[currentLine] = part1;
+                    code_code[currentLine] = firstHalf;
             
                     if(var_DATA.get(name).equals(DECLAREINT))
                     {
@@ -177,7 +172,7 @@ public class Program
                         code_code[currentLine] += var_doubles.get(name);
                     }
                     
-                    code_code[currentLine] += part2;
+                    code_code[currentLine] += secondHalf;
                 }
                 else
                 {
@@ -192,15 +187,9 @@ public class Program
             {
                 String input = "";
                 int index = 0;
-                    
-                for(int i = 0; i < code_code[currentLine].length() - EVALUATEEXPRESSION.length(); i++)
-                {
-                    if(code_code[currentLine].substring(i, i + EVALUATEEXPRESSION.length()).equals(EVALUATEEXPRESSION))
-                    {
-                        input = code_code[currentLine].substring(i + EVALUATEEXPRESSION.length() + 1);
-                        index = i;
-                    }
-                }
+                
+                index = code_code[currentLine].indexOf(EVALUATEEXPRESSION);
+                input = code_code[currentLine].substring(index + EVALUATEEXPRESSION.length() + 1);       
 
                 code_code[currentLine] = code_code[currentLine].substring(0, index);
                 code_code[currentLine] += new Evaluation(input).getResult();
@@ -483,11 +472,7 @@ public class Program
                     }
                 }
                 
-                if(value1.equals(value2))
-                {
-                    //do nothing, continue the code as normal
-                }
-                else
+                if(!value1.equals(value2))
                 {
                     for(int i = currentLine; i < code_numberOfLines; i++)
                     {
@@ -721,6 +706,30 @@ public class Program
     private boolean condition_lineEndsIf(int line)
     {
         if(code_code[line].equals(ENDIF))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    private boolean condition_lineStartsWhile(int line)
+    {
+        if(code_code[line].startsWith(STARTWHILE))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    private boolean condition_lineEndsWhile(int line)
+    {
+        if(code_code[line].equals(ENDWHILE))
         {
             return true;
         }
