@@ -6,6 +6,7 @@ public class Program
     private String code_rawCode;
     private String[] code_code;
     private int code_numberOfLines;
+    private int code_currentLine;
     
     //variable variables
     private Storage var_ints;
@@ -42,7 +43,8 @@ public class Program
         code_rawCode = code;
         code_rawCode += "\n";
         code_numberOfLines = 0;
-        
+        code_currentLine = 0;
+             
         var_ints = new Storage(DECLAREINT);
         var_strings = new Storage(DECLARESTRING);
         var_booleans = new Storage(DECLAREBOOLEAN);
@@ -54,11 +56,9 @@ public class Program
         var_variables[3] = var_doubles;
         
         var_DATA = new Storage("");
-        
-        program_preprocess();
     }
     
-    private void program_preprocess()
+    public void program_process()
     {
         //count number of newline characters in the program
         for(int i = 0; i < code_rawCode.length(); i++)
@@ -66,447 +66,558 @@ public class Program
             if(code_rawCode.charAt(i) == '\n')
             {
                 code_numberOfLines++;
-            }
-        }
+            }      
+        }   
         
         //allocate array, one index for each line of code
-        code_code = new String[code_numberOfLines];
+        String[] temp = new String[code_numberOfLines];
         
         //populate array
-        int lastIndex = 0;
-        int currentLine = 0;
+        int lastStringIndex = 0;
+        int currentCodeLine = 0;
         
         for(int i = 0; i < code_rawCode.length(); i++)
         {
             if(code_rawCode.charAt(i) == '\n')
             {
-                code_code[currentLine] = code_rawCode.substring(lastIndex, i);
-                currentLine++;
-                lastIndex = i + 1;
+                temp[currentCodeLine] = code_rawCode.substring(lastStringIndex, i);
+                currentCodeLine++;
+                lastStringIndex = i + 1;
             }
         }
+        
+        code_numberOfLines = 0;
+        
+        //count number of non-blank, non-comment lines
+        for(int i = 0; i < temp.length; i++)
+        {
+            if(!temp[i].equals(""))
+            {
+        	code_numberOfLines++;
+            }
+        }
+        
+        code_code = new String[code_numberOfLines];
+        int lastCodeIndex = 0;
+        
+        for(int i = 0; i < temp.length; i++)
+        {
+            if(!temp[i].equals(""))
+            {
+        	code_code[lastCodeIndex] = temp[i];
+        	lastCodeIndex++;
+            }
+        }
+        
+        if(condition_startIsPresent() && condition_endIsPresent()) 
+        {
+	    while(code_currentLine < code_numberOfLines)
+	    {
+		System.out.println("Processing " + code_code[code_currentLine]);
+		
+		if(!program_processLine())
+		{
+		    code_currentLine = code_numberOfLines;
+		}
+		else
+		{
+		    program_updateVariableList();
+		}
+	    }
+	}
     }
 
-    public void program_process()
+    private boolean program_processLine()
     {
-        boolean programFinished = false;
-        boolean error = false;
-        
-        //check for some basic errors (no start, no end)
-        if(!condition_startIsPresent())
+	//start
+	if(condition_lineIsStart(code_currentLine))
+	{
+	    code_currentLine++;
+	    return true;
+	}
+	
+	//end
+	if(condition_lineIsEnd(code_currentLine))
+	{
+	    code_currentLine++;
+	    return true;
+	}
+	
+        //GETS
+        while(condition_lineGets(code_currentLine))
         {
-            error = true;
-            programFinished = true;
-        }
-        
-        if(!error & !condition_endIsPresent())
-        {
-            error = true;
-            programFinished = true;
-        }
-        
-        int currentLine = 1;
-        
-        while(!programFinished)
-        {
-            //check if the line is blank or a comment, if so, skip it
-            if(condition_lineIsBlank(currentLine) || condition_lineIsComment(currentLine))
-            {
-                currentLine++;
-            }
-            
-            //check if the program is done
-            if(condition_lineIsEnd(currentLine))
-            {
-                programFinished = true;
-            }
-            
-            //GETS
-            while(!programFinished & condition_lineGets(currentLine))
-            {
-                String name = "";
-                int index = -1;
-                int secondSpaceIndex = -1;
-        
-                index = code_code[currentLine].indexOf(GET);
-                secondSpaceIndex = code_code[currentLine].indexOf(' ', index + GET.length() + 1);                
+            String name = "";
+            int index = -1;
+            int secondSpaceIndex = -1;
+    
+            index = code_code[code_currentLine].indexOf(GET);
+            secondSpaceIndex = code_code[code_currentLine].indexOf(' ', index + GET.length() + 1);        
 
-                if(secondSpaceIndex == -1)
+            if(secondSpaceIndex == -1)
+    	    {
+        	name = code_code[code_currentLine].substring(index + GET.length() + 1);
+    	    }
+    	    else
+    	    {
+    		name = code_code[code_currentLine].substring(index + GET.length() + 1, secondSpaceIndex);
+    	    }
+    
+            if(var_DATA.nameIsPresent(name))
+            {
+        	String firstHalf = code_code[code_currentLine].substring(0, index);
+        	String secondHalf = "";
+            
+        	if(!(secondSpaceIndex == -1))
         	{
-                    name = code_code[currentLine].substring(index + GET.length() + 1);
+        	    secondHalf = code_code[code_currentLine].substring(secondSpaceIndex);
+        	}
+            
+        	code_code[code_currentLine] = firstHalf;
+        
+        	if(var_DATA.get(name).equals(DECLAREINT))
+        	{
+        	    code_code[code_currentLine] += var_ints.get(name);
+        	}
+        
+        	if(var_DATA.get(name).equals(DECLARESTRING))
+        	{
+        	    code_code[code_currentLine] += var_strings.get(name);
+        	}
+        
+        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
+        	{
+        	    code_code[code_currentLine] += var_booleans.get(name);
+        	}
+        
+        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
+        	{
+        	    code_code[code_currentLine] += var_doubles.get(name);
+        	}
+            
+        	code_code[code_currentLine] += secondHalf;
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not get variable " + name + " because the variable does not exist");
+        	return false;
+            }
+        }
+        
+        //EVALUATES
+        if(condition_lineEvaluates(code_currentLine))
+        {
+            String input = "";
+            int index = 0;
+        
+            index = code_code[code_currentLine].indexOf(EVALUATEEXPRESSION);
+            input = code_code[code_currentLine].substring(index + EVALUATEEXPRESSION.length() + 1);       
+
+            code_code[code_currentLine] = code_code[code_currentLine].substring(0, index);
+            code_code[code_currentLine] += new MathEvaluation(input).getResult();
+        }
+            
+        //DECLAREINT
+        if(condition_lineDeclaresInt(code_currentLine))
+        {
+            String name = "";
+            String value = "";
+    
+            for(int i = DECLAREINT.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    name = code_code[code_currentLine].substring(DECLAREINT.length() + 1, i);
+        	    value = code_code[code_currentLine].substring(i + 1);
+        	}
+            }
+    
+            if(!var_DATA.nameIsPresent(name))
+            {
+        	try
+        	{
+        	    var_ints.add(name, Integer.parseInt(value));
+        	    var_DATA.add(name, DECLAREINT);
+
+        	    code_currentLine++;
+        	    return true;
+        	}
+        	catch (NumberFormatException e)
+        	{
+        	    error_throwError(code_currentLine, value + " is not an int");
+        	    return false;
+        	}
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not initialize int " + name + " because the name is already in use");
+        	return false;
+            }
+        }
+        
+        //DECLARESTRING
+        else if(condition_lineDeclaresString(code_currentLine))
+        {
+            String name = "";
+            String value = "";
+    
+            for(int i = DECLARESTRING.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    name = code_code[code_currentLine].substring(DECLARESTRING.length() + 1, i);
+        	    value = code_code[code_currentLine].substring(i + 1);
+        	}
+            }
+    
+            if(!var_DATA.nameIsPresent(name))
+            { 
+        	var_strings.add(name, value);
+        	var_DATA.add(name, DECLARESTRING);
+        	
+        	code_currentLine++;
+        	return true;
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not initialize string " + name + " because the name is already in use");
+        	return false;
+            }
+        }
+        
+        //DECLAREBOOLEAN
+        else if(condition_lineDeclaresBoolean(code_currentLine))
+        {
+            String name = "";
+            String value = "";
+    
+            for(int i = DECLAREBOOLEAN.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    name = code_code[code_currentLine].substring(DECLAREBOOLEAN.length() + 1, i);
+        	    value = code_code[code_currentLine].substring(i + 1);
+        	}
+            }
+    
+            if(!var_DATA.nameIsPresent(name))
+            {
+        	if(value.equals("true") || value.equals("false"))
+        	{
+        	    var_booleans.add(name, Boolean.parseBoolean(value));
+        	    var_DATA.add(name, DECLAREBOOLEAN);
+        	    
+        	    code_currentLine++;
+        	    return true;
         	}
         	else
         	{
-        	    name = code_code[currentLine].substring(index + GET.length() + 1, secondSpaceIndex);
+        	    error_throwError(code_currentLine, value + " is not a boolean");
+        	    return false;
+        	}
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not initialize boolean " + name + " because the name is already in use");
+        	return false;
+            }
+        }
+        
+        //DECLAREDOUBLE
+        else if(condition_lineDeclaresDouble(code_currentLine))
+        {
+            String name = "";
+            String value = "";
+    
+            for(int i = DECLAREDOUBLE.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    name = code_code[code_currentLine].substring(DECLAREDOUBLE.length() + 1, i);
+        	    value = code_code[code_currentLine].substring(i + 1);
+        	}
+            }
+    
+            if(!var_DATA.nameIsPresent(name))
+            {
+        	try
+        	{
+        	    var_doubles.add(name, Double.parseDouble(value));
+        	    var_DATA.add(name, DECLAREDOUBLE);  
+        	    
+        	    code_currentLine++;
+        	    return true;
+        	}
+        	catch (NumberFormatException e)
+        	{
+        	    error_throwError(code_currentLine, value + " is not a double");
+        	    return false;
+        	}
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not initialize double " + name + " because the name is already in use");
+        	return false;
+            }
+        }
+        
+        //DELETES
+        else if(condition_lineDeletes(code_currentLine))
+        {
+            String name = code_code[code_currentLine].substring(DELETE.length() + 1);
+    
+            if(var_DATA.nameIsPresent(name))
+            {
+        	if(var_DATA.get(name).equals(DECLAREINT))
+        	{
+        	    var_ints.delete(name);
+        	}
+            
+        	if(var_DATA.get(name).equals(DECLARESTRING))
+        	{
+        	    var_strings.delete(name);
         	}
         
-                if(var_DATA.nameIsPresent(name))
-                {
-                    String firstHalf = code_code[currentLine].substring(0, index);
-                    String secondHalf = "";
-                    
-                    if(!(secondSpaceIndex == -1))
-                    {
-                        secondHalf = code_code[currentLine].substring(secondSpaceIndex);
-                    }
-                    
-                    code_code[currentLine] = firstHalf;
-            
-                    if(var_DATA.get(name).equals(DECLAREINT))
-                    {
-                        code_code[currentLine] += var_ints.get(name);
-                    }
-            
-                    if(var_DATA.get(name).equals(DECLARESTRING))
-                    {
-                        code_code[currentLine] += var_strings.get(name);
-                    }
-            
-                    if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-                    {
-                        code_code[currentLine] += var_booleans.get(name);
-                    }
-            
-                    if(var_DATA.get(name).equals(DECLAREDOUBLE))
-                    {
-                        code_code[currentLine] += var_doubles.get(name);
-                    }
-                    
-                    code_code[currentLine] += secondHalf;
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not get variable " + name + " because the variable does not exist");
-                    programFinished = true;
-                    error = true;
-                }
-            }
-            
-            //EVALUATES
-            if(!programFinished & condition_lineEvaluates(currentLine))
-            {
-                String input = "";
-                int index = 0;
-                
-                index = code_code[currentLine].indexOf(EVALUATEEXPRESSION);
-                input = code_code[currentLine].substring(index + EVALUATEEXPRESSION.length() + 1);       
-
-                code_code[currentLine] = code_code[currentLine].substring(0, index);
-                code_code[currentLine] += new Evaluation(input).getResult();
-                
-                System.out.println(code_code[currentLine]);
-            }
-                        
-            //DECLAREINT
-            if(!programFinished & condition_lineDeclaresInt(currentLine))
-            {
-                String name = "";
-                String value = "";
+        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
+        	{
+        	    var_booleans.delete(name);
+        	}
         
-                for(int i = DECLAREINT.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        name = code_code[currentLine].substring(DECLAREINT.length() + 1, i);
-                        value = code_code[currentLine].substring(i + 1);
-                    }
-                }
+        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
+        	{
+        	    var_doubles.delete(name);
+        	}
         
-                if(!var_DATA.nameIsPresent(name))
-                {
-                    try
-                    {
-                        var_ints.add(name, Integer.parseInt(value));
-                        var_DATA.add(name, DECLAREINT);
-                    }
-                    catch (NumberFormatException e)
-                    {
-                        error_throwError(currentLine, value + " is not an int");
-                        programFinished = true;
-                        error = true;
-                    }
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not initialize int " + name + " because the name is already in use");
-                    programFinished = true;
-                    error = true;
-                }
+        	var_DATA.delete(name);
+        	
+        	code_currentLine++;
+        	return true;
             }
-            
-            //DECLARESTRING
-            if(!programFinished & condition_lineDeclaresString(currentLine))
+            else
             {
-                String name = "";
-                String value = "";
-        
-                for(int i = DECLARESTRING.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        name = code_code[currentLine].substring(DECLARESTRING.length() + 1, i);
-                        value = code_code[currentLine].substring(i + 1);
-                    }
-                }
-        
-                if(!var_DATA.nameIsPresent(name))
-                { 
-                    var_strings.add(name, value);
-                    var_DATA.add(name, DECLARESTRING);
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not initialize string " + name + " because the name is already in use");
-                    programFinished = true;
-                    error = true;
-                }
+        	error_throwError(code_currentLine, "Could not delete variable " + name + " because the variable does not exist");
+        	return false;
             }
-            
-            //DECLAREBOOLEAN
-            if(!programFinished & condition_lineDeclaresBoolean(currentLine))
-            {
-                String name = "";
-                String value = "";
-        
-                for(int i = DECLAREBOOLEAN.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        name = code_code[currentLine].substring(DECLAREBOOLEAN.length() + 1, i);
-                        value = code_code[currentLine].substring(i + 1);
-                    }
-                }
-        
-                if(!var_DATA.nameIsPresent(name))
-                {
-                    if(value.equals("true") || value.equals("false"))
-                    {
-                        var_booleans.add(name, Boolean.parseBoolean(value));
-                        var_DATA.add(name, DECLAREBOOLEAN);
-                    }
-                    else
-                    {
-                        error_throwError(currentLine, value + " is not a boolean");
-                        programFinished = true;
-                        error = true;
-                    }
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not initialize boolean " + name + " because the name is already in use");
-                    programFinished = true;
-                    error = true;
-                }
-            }
-            
-            //DECLAREDOUBLE
-            if(!programFinished & condition_lineDeclaresDouble(currentLine))
-            {
-                String name = "";
-                String value = "";
-        
-                for(int i = DECLAREDOUBLE.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        name = code_code[currentLine].substring(DECLAREDOUBLE.length() + 1, i);
-                        value = code_code[currentLine].substring(i + 1);
-                    }
-                }
-        
-                if(!var_DATA.nameIsPresent(name))
-                {
-                    try
-                    {
-                        var_doubles.add(name, Double.parseDouble(value));
-                        var_DATA.add(name, DECLAREDOUBLE);   
-                    }
-                    catch (NumberFormatException e)
-                    {
-                        error_throwError(currentLine, value + " is not a double");
-                        programFinished = true;
-                        error = true;
-                    }
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not initialize double " + name + " because the name is already in use");
-                    programFinished = true;
-                    error = true;
-                }
-            }
-            
-            //DELETES
-            if(!programFinished & condition_lineDeletes(currentLine))
-            {
-                String name = code_code[currentLine].substring(DELETE.length() + 1);
-        
-                if(var_DATA.nameIsPresent(name))
-                {
-                    if(var_DATA.get(name).equals(DECLAREINT))
-                    {
-                        var_ints.delete(name);
-                    }
-                    
-                    if(var_DATA.get(name).equals(DECLARESTRING))
-                    {
-                        var_strings.delete(name);
-                    }
-            
-                    if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-                    {
-                        var_booleans.delete(name);
-                    }
-            
-                    if(var_DATA.get(name).equals(DECLAREDOUBLE))
-                    {
-                        var_doubles.delete(name);
-                    }
-            
-                    var_DATA.delete(name);
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not delete variable " + name + " because the variable does not exist");
-                    programFinished = true;
-                    error = true;
-                }
-            }
-              
-            //SETS
-            if(!programFinished & condition_lineSets(currentLine))
-            {
-                String name = "";
-                String value = "";
-        
-                for(int i = SET.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        name = code_code[currentLine].substring(SET.length() + 1, i);
-                        value = code_code[currentLine].substring(i + 1);
-                    }
-                }
-        
-                if(var_DATA.nameIsPresent(name))
-                {
-                    if(var_DATA.get(name).equals(DECLAREINT))
-                    {
-                        try
-                        {
-                            var_ints.set(name, Integer.parseInt(value));
-                        }
-                        catch (NumberFormatException e)
-                        {
-                            error_throwError(currentLine, value + " is not an int");
-                            programFinished = true;
-                            error = true;
-                        }
-                    }
-                    
-                    if(var_DATA.get(name).equals(DECLARESTRING))
-                    {
-                        var_strings.set(name, value);
-                    }
-                    
-                    if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-                    {
-                        if(value.equals("true") || value.equals("false"))
-                        {
-                            var_booleans.set(name, Boolean.parseBoolean(value));
-                        }
-                        else
-                        {
-                            error_throwError(currentLine, value + " is not a boolean");
-                            programFinished = true;
-                            error = true;
-                        }
-                    }
-
-                    if(var_DATA.get(name).equals(DECLAREDOUBLE))
-                    {        
-                        try
-                        {
-                            var_doubles.set(name, Double.parseDouble(value));
-                        }
-                        catch (NumberFormatException e)
-                        {
-                            error_throwError(currentLine, value + " is not an double");
-                            programFinished = true;
-                            error = true;
-                        }
-                    }
-                }
-                else
-                {
-                    error_throwError(currentLine, "Could not set variable " + name + " because the variable does not exist");
-                    programFinished = true;
-                    error = true;
-                }
-            }
-            
-            //PRINTS
-            if(!programFinished & condition_linePrints(currentLine))
-            {
-                String value = code_code[currentLine].substring(PRINT.length() + 1);
-                GUIHandler.update_output(value);
-            }
-            
-            if(!programFinished & condition_linePrintsNewLine(currentLine))
-            {
-                GUIHandler.update_output("\n");
-            }
-            
-            //IF
-            if(!programFinished & condition_lineStartsIf(currentLine))
-            {
-                String value1 = "";
-                String value2 = "";
-                
-                for(int i = STARTIF.length() + 1; i < code_code[currentLine].length(); i++)
-                {
-                    if(code_code[currentLine].charAt(i) == ' ')
-                    {
-                        value1 = code_code[currentLine].substring(STARTIF.length() + 1, i);
-                        value2 = code_code[currentLine].substring(i + 1);
-                    }
-                }
-                
-                if(!value1.equals(value2))
-                {
-                    for(int i = currentLine; i < code_numberOfLines; i++)
-                    {
-                        if(condition_lineEndsIf(i))
-                        {
-                            currentLine = i;
-                            i = code_numberOfLines;
-                        }
-                        
-                        if(i == code_numberOfLines - 1)
-                        {
-                            error_throwError(currentLine, "Could not find endIf statement");
-                            programFinished = true;
-                            error = true;
-                        }
-                    }
-                }
-            }
-            
-            GUIHandler.update_variables_clear();
-            
-            for(int i = 0; i < var_variables.length; i++)
-            {
-                GUIHandler.update_variables(var_variables[i].displayVars());
-            }
-            
-            currentLine++;
         }
-        
-        if(!error)
+          
+        //SETS
+        else if(condition_lineSets(code_currentLine))
         {
-            GUIHandler.update_output("Program Finished!\n");
+            String name = "";
+            String value = "";
+    
+            for(int i = SET.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    name = code_code[code_currentLine].substring(SET.length() + 1, i);
+        	    value = code_code[code_currentLine].substring(i + 1);
+        	}
+            }
+    
+            if(var_DATA.nameIsPresent(name))
+            {
+        	if(var_DATA.get(name).equals(DECLAREINT))
+        	{
+        	    try
+        	    {
+        		var_ints.set(name, Integer.parseInt(value));
+        		
+        		code_currentLine++;
+        		return true;
+        	    }
+        	    catch (NumberFormatException e)
+        	    {
+        		error_throwError(code_currentLine, value + " is not an int");
+        		return false;
+        	    }
+        	}
+            
+        	if(var_DATA.get(name).equals(DECLARESTRING))
+        	{
+        	    var_strings.set(name, value);
+        	    
+        	    code_currentLine++;
+        	    return true;
+        	}
+            
+        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
+        	{
+        	    if(value.equals("true") || value.equals("false"))
+        	    {
+        		var_booleans.set(name, Boolean.parseBoolean(value));
+        		
+        		code_currentLine++;
+        		return true;
+        	    }
+        	    else
+        	    {
+        		error_throwError(code_currentLine, value + " is not a boolean");
+        		return false;
+        	    }
+        	}
+
+        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
+        	{    
+        	    try
+        	    {
+        		var_doubles.set(name, Double.parseDouble(value));
+        		
+        		code_currentLine++;
+        		return true;
+        	    }
+        	    catch(NumberFormatException e)
+        	    {
+        		error_throwError(code_currentLine, value + " is not an double");
+        		return false;
+        	    }
+        	}
+            }
+            else
+            {
+        	error_throwError(code_currentLine, "Could not set variable " + name + " because the variable does not exist");
+        	return false;
+            }
         }
         
+        //PRINTS
+        else if(condition_linePrints(code_currentLine))
+        {
+            String value = code_code[code_currentLine].substring(PRINT.length() + 1);
+            GUIHandler.update_output(value);
+            
+            code_currentLine++;
+            return true;
+        }
+        
+        else if(condition_linePrintsNewLine(code_currentLine))
+        {
+            GUIHandler.update_output("\n");
+            
+            code_currentLine++;
+            return true;
+        }
+        
+        //IF
+        else if(condition_lineStartsIf(code_currentLine))
+        {
+            String value1 = "";
+            String value2 = "";
+        
+            for(int i = STARTIF.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    value1 = code_code[code_currentLine].substring(STARTIF.length() + 1, i);
+        	    value2 = code_code[code_currentLine].substring(i + 1);
+        	}
+            }     
+            
+            if(!value1.equals(value2))
+            {
+                for(int i = code_currentLine; i < code_numberOfLines; i++)
+                {
+                    if(condition_lineEndsIf(i))
+                    {
+                        code_currentLine = i;
+                        return true;
+                    }
+                    
+                    if(i == code_numberOfLines - 1)
+                    {
+                        error_throwError(code_currentLine, "Could not find endIf statement");
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+        	code_currentLine++;
+        	return true;
+            }
+        }
+        
+        //TODO: optimize?
+        else if(condition_lineEndsIf(code_currentLine))
+        {
+            code_currentLine++;
+            return true;
+        }
+        
+        //while
+        else if(condition_lineStartsWhile(code_currentLine))
+        {
+            String value1 = "";
+            String value2 = "";
+            int lineOfStart = code_currentLine;
+        
+            for(int i = STARTWHILE.length() + 1; i < code_code[code_currentLine].length(); i++)
+            {
+        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	{
+        	    value1 = code_code[code_currentLine].substring(STARTWHILE.length() + 1, i);
+        	    value2 = code_code[code_currentLine].substring(i + 1);
+        	}
+            }     
+            
+            int lineOfEnd = 0;
+            
+            for(int i = code_currentLine; i < code_numberOfLines; i++)
+            {
+        	if(condition_lineEndsWhile(i))
+        	{
+        	    lineOfEnd = i;
+        	    i = code_numberOfLines;
+        	}
+        	
+                if(i == code_numberOfLines - 1)
+                {
+                    error_throwError(code_currentLine, "Could not find endWhile statement");
+                    return false;
+                }
+            }
+            
+            if(value1.equals(value2))
+            {
+        	code_currentLine++;
+        	
+                while(code_currentLine != lineOfEnd)
+                {
+                    System.out.println("Processing " + code_code[code_currentLine]);
+                    program_processLine();
+                }
+                
+                System.out.println("finished while loop");
+                code_currentLine = lineOfStart;
+            }
+            else
+            {
+        	code_currentLine = lineOfEnd;
+            }
+        }
+        
+        else if(condition_lineEndsWhile(code_currentLine))
+        {
+            code_currentLine++;
+            return true;
+        }
+        
+        else
+        {
+            error_throwError(code_currentLine, "Could not process " + code_code[code_currentLine]);
+            return false;
+        }
+          
+	return true;	
+    }
+
+    private void program_updateVariableList()
+    {
+	GUIHandler.update_variables_clear();
+        
+        for(int i = 0; i < var_variables.length; i++)
+        {
+            GUIHandler.update_variables(var_variables[i].displayVars());
+        }
     }
     
     private boolean condition_startIsPresent()
@@ -535,21 +646,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineIsBlank(int line)
+    private boolean condition_lineIsStart(int line)
     {
-        if(code_code[line].equals(""))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    
-    private boolean condition_lineIsComment(int line)
-    {
-        if(code_code[line].startsWith("//"))
+	if(code_code[line].equals(STARTCOMMAND))
         {
             return true;
         }
@@ -561,7 +660,7 @@ public class Program
     
     private boolean condition_lineIsEnd(int line)
     {
-        if(code_code[line].equals(ENDCOMMAND))
+	if(code_code[line].equals(ENDCOMMAND))
         {
             return true;
         }

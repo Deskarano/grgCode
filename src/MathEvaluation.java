@@ -1,13 +1,13 @@
 package grgCode;
 
-public class Evaluation
+public class MathEvaluation
 {
     private String evalString ;
     private int numberOfOperations;
     
     private double finalResultDouble;
 
-    public Evaluation(String input)
+    public MathEvaluation(String input)
     {
         evalString = input;
         numberOfOperations = 0;
@@ -34,7 +34,7 @@ public class Evaluation
         for(int i = 0; i < evalString.length(); i++)
         {
             char currentChar = evalString.charAt(i);
-            if(currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/')
+            if(currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == '/' || currentChar == '%')
             {
                 numberOfOperations++;
             }
@@ -53,15 +53,30 @@ public class Evaluation
             double resultOfOperation = 0;
             String resultString = "";
             
-            //multiply and divide
+            //mod
             for(int i = 0; i < evalString.length(); i++)
             {
                 char currentChar = evalString.charAt(i);
-                if(currentChar == '*' || currentChar == '/')
+                if(currentChar == '%')
                 {
                     indexOfOperation = i;
                     operation = currentChar;
                     i = evalString.length();
+                }
+            }
+            
+            //multiply and divide
+            if(operation == ' ')
+            {
+                for(int i = 0; i < evalString.length(); i++)
+                {
+                    char currentChar = evalString.charAt(i);
+                    if(currentChar == '*' || currentChar == '/')
+                    {
+                        indexOfOperation = i;
+                        operation = currentChar;
+                        i = evalString.length();
+                    }
                 }
             }
             
@@ -85,7 +100,7 @@ public class Evaluation
             {
                 if(i == 0)
                 {
-                    num1 = evalString.substring(0, indexOfOperation - 1);
+                    num1 = evalString.substring(i, indexOfOperation - 1);
                     num1Index = i;
                     i = -1;
                 }
@@ -132,6 +147,10 @@ public class Evaluation
             {
                 resultOfOperation = num1Double / num2Double;
             }    
+            if(operation == '%')
+            {
+        	resultOfOperation = num1Double % num2Double;
+            }
             
             resultString += evalString.substring(0, num1Index);
             resultString += resultOfOperation;
