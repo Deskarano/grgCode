@@ -29,4 +29,8 @@ endIf
 
 endWhile
 
+delete testNum
+delete signal
+delete limit
+
 end
