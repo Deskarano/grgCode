@@ -136,19 +136,18 @@ public class GUIHandler
         
         menu_program_stepbystep.addActionListener(new ActionListener()
             {
-		@Override
-		public void actionPerformed(ActionEvent arg0) 
-		{
-		    if(program_currentProgram == null)
-		    {
-			program_currentProgram = new Program(component_input.getText());
-			program_currentProgram.program_preprocess();
-		    }
+        		@Override
+        		public void actionPerformed(ActionEvent arg0) 
+        		{
+				    if(program_currentProgram == null | program_currentProgram.program_isDone())
+				    {
+						program_currentProgram = new Program(component_input.getText());
+						program_currentProgram.program_preprocess();
+				    }
 		    
-		    program_currentProgram.program_processLine();
-		}          
-            });
-    
+				    program_currentProgram.program_processLine();
+        		}          
+            });   
     
         //put everything together
         menu_file_new.add(menu_file_new_program);
@@ -201,14 +200,14 @@ public class GUIHandler
     
     private static void instantiate_finalize()
     {
-	component_mainFrame.add(component_inputScrollPane, constraints_input);
-	component_mainFrame.add(component_outputScrollPane, constraints_output);
-	component_mainFrame.add(component_variablesScrollPane, constraints_variables);
+    	component_mainFrame.add(component_inputScrollPane, constraints_input);
+    	component_mainFrame.add(component_outputScrollPane, constraints_output);
+    	component_mainFrame.add(component_variablesScrollPane, constraints_variables);
     
-	component_mainFrame.setJMenuBar(menu_mainBar);
+    	component_mainFrame.setJMenuBar(menu_mainBar);
     
-	component_mainFrame.pack();
-	component_mainFrame.setVisible(true);
+    	component_mainFrame.pack();
+    	component_mainFrame.setVisible(true);
     }
     
     public static void update_output(String update)
