@@ -20,24 +20,24 @@ public class Program
     private Storage[] var_variables = new Storage[4];
     
     //command variables
-    public static String STARTCOMMAND = "start";
-    public static String ENDCOMMAND = "end";
+    public static final String COMMAND_START = "start";
+    public static final String COMMAND_END = "end";
     
-    public static String DECLAREINT = "int";
-    public static String DECLARESTRING = "string";
-    public static String DECLAREBOOLEAN = "boolean";
-    public static String DECLAREDOUBLE = "double";
+    public static final String COMMAND_DECLAREINT = "int";
+    public static final String COMMAND_DECLARESTRING = "string";
+    public static final String COMMAND_DECLAREBOOLEAN = "boolean";
+    public static final String COMMAND_DECLAREDOUBLE = "double";
     
-    public static String SET = "set";
-    public static String GET = "get";
-    public static String DELETE = "delete";
-    public static String PRINT = "print";
-    public static String PRINTNEWLINE = "printNL";
-    public static String EVALUATEEXPRESSION = "eval";
-    public static String STARTIF = "if";
-    public static String ENDIF = "endIf";
-    public static String STARTWHILE = "while";
-    public static String ENDWHILE = "endWhile";
+    public static final String COMMAND_SET = "set";
+    public static final String COMMAND_GET = "get";
+    public static final String COMMAND_DELETE = "delete";
+    public static final String COMMAND_PRINT = "print";
+    public static final String COMMAND_PRINTNEWLINE = "printNL";
+    public static final String COMMAND_EVALUATEEXPRESSION = "eval";
+    public static final String COMMAND_STARTIF = "if";
+    public static final String COMMAND_ENDIF = "endIf";
+    public static final String COMMAND_STARTWHILE = "while";
+    public static final String COMMAND_ENDWHILE = "endWhile";
     
     public Program(String code)
     {
@@ -46,10 +46,10 @@ public class Program
         code_numberOfLines = 0;
         code_currentLineNum = 0;
              
-        var_ints = new Storage(DECLAREINT);
-        var_strings = new Storage(DECLARESTRING);
-        var_booleans = new Storage(DECLAREBOOLEAN);
-        var_doubles = new Storage(DECLAREDOUBLE);
+        var_ints = new Storage(COMMAND_DECLAREINT);
+        var_strings = new Storage(COMMAND_DECLARESTRING);
+        var_booleans = new Storage(COMMAND_DECLAREBOOLEAN);
+        var_doubles = new Storage(COMMAND_DECLAREDOUBLE);
         
         var_variables[0] = var_ints;
         var_variables[1] = var_strings;
@@ -94,7 +94,7 @@ public class Program
         {
             if(!temp[i].equals(""))
             {
-        	code_numberOfLines++;
+            	code_numberOfLines++;
             }
         }
         
@@ -105,46 +105,46 @@ public class Program
         {
             if(!temp[i].equals(""))
             {
-        	code_code[lastCodeIndex] = temp[i];
-        	lastCodeIndex++;
+	        	code_code[lastCodeIndex] = temp[i];
+	        	lastCodeIndex++;
             }
         }                
     }
     
     public void program_process()
     {
-	if(condition_startIsPresent() && condition_endIsPresent()) 
-        {
-	    while(code_currentLineNum < code_numberOfLines)
+		if(condition_startIsPresent() && condition_endIsPresent()) 
 	    {
-		if(!program_processLine())
-		{
-		    code_currentLineNum = code_numberOfLines;
+		    while(code_currentLineNum < code_numberOfLines)
+		    {
+		    	if(!program_processLine())
+		    	{
+		    		code_currentLineNum = code_numberOfLines;
+		    	}
+		    }
+		    
+		    System.out.println("----------------------------");
 		}
-	    }
-	    
-	    //System.out.println("----------------------------");
-	}
     }
 
     public boolean program_processLine()
     {
-	code_currentLine = code_code[code_currentLineNum];
-	//System.out.println("Processing " + code_currentLine);
+    	code_currentLine = code_code[code_currentLineNum];
+    	System.out.println("Processing " + code_currentLine);
 	
-	//start
-	if(condition_lineIsStart())
-	{
-	    code_currentLineNum++;
-	    return true;
-	}
+    	//start
+    	if(condition_lineIsStart())
+    	{
+    		code_currentLineNum++;
+    		return true;
+    	}
 	
-	//end
-	if(condition_lineIsEnd())
-	{
-	    code_currentLineNum++;
-	    return true;
-	}
+    	//end
+    	if(condition_lineIsEnd())
+    	{
+    		code_currentLineNum++;
+    		return true;
+    	}
 	
         //GETS
         while(condition_lineGets())
@@ -153,56 +153,56 @@ public class Program
             int index = -1;
             int secondSpaceIndex = -1;
     
-            index = code_currentLine.indexOf(GET);
-            secondSpaceIndex = code_currentLine.indexOf(' ', index + GET.length() + 1);        
+            index = code_currentLine.indexOf(COMMAND_GET);
+            secondSpaceIndex = code_currentLine.indexOf(' ', index + COMMAND_GET.length() + 1);        
 
             if(secondSpaceIndex == -1)
     	    {
-        	name = code_currentLine.substring(index + GET.length() + 1);
+            	name = code_currentLine.substring(index + COMMAND_GET.length() + 1);
     	    }
     	    else
     	    {
-    		name = code_currentLine.substring(index + GET.length() + 1, secondSpaceIndex);
+    	    	name = code_currentLine.substring(index + COMMAND_GET.length() + 1, secondSpaceIndex);
     	    }
     
             if(var_DATA.nameIsPresent(name))
             {
-        	String firstHalf = code_currentLine.substring(0, index);
-        	String secondHalf = "";
+            	String firstHalf = code_currentLine.substring(0, index);
+            	String secondHalf = "";
             
-        	if(!(secondSpaceIndex == -1))
-        	{
-        	    secondHalf = code_currentLine.substring(secondSpaceIndex);
-        	}
+            	if(!(secondSpaceIndex == -1))
+            	{
+            		secondHalf = code_currentLine.substring(secondSpaceIndex);
+            	}
             
-        	code_currentLine = firstHalf;
+            	code_currentLine = firstHalf;
         
-        	if(var_DATA.get(name).equals(DECLAREINT))
-        	{
-        	    code_currentLine += var_ints.get(name);
-        	}
-        
-        	if(var_DATA.get(name).equals(DECLARESTRING))
-        	{
-        	    code_currentLine += var_strings.get(name);
-        	}
-        
-        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-        	{
-        	    code_currentLine += var_booleans.get(name);
-        	}
-        
-        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
-        	{
-        	    code_currentLine += var_doubles.get(name);
-        	}
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
+	        	{
+	        	    code_currentLine += var_ints.get(name);
+	        	}
+	        
+	        	if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+	        	{
+	        	    code_currentLine += var_strings.get(name);
+	        	}
+	        
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+	        	{
+	        	    code_currentLine += var_booleans.get(name);
+	        	}
+	        
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+	        	{
+	        	    code_currentLine += var_doubles.get(name);
+	        	}
             
-        	code_currentLine += secondHalf;
+	        	code_currentLine += secondHalf;
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not get variable " + name + " because the variable does not exist");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not get variable " + name + " because the variable does not exist");
+	        	return false;
             }
         }
         
@@ -212,198 +212,198 @@ public class Program
             String input = "";
             int index = 0;
         
-            index = code_currentLine.indexOf(EVALUATEEXPRESSION);
-            input = code_currentLine.substring(index + EVALUATEEXPRESSION.length() + 1);       
+            index = code_currentLine.indexOf(COMMAND_EVALUATEEXPRESSION);
+            input = code_currentLine.substring(index + COMMAND_EVALUATEEXPRESSION.length() + 1);       
 
             code_currentLine = code_currentLine.substring(0, index);
             code_currentLine += new MathEvaluation(input).getResult();
         }
             
-        //DECLAREINT
+        //COMMAND_DECLAREINT
         if(condition_lineDeclaresInt())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREINT.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREINT.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    name = code_currentLine.substring(DECLAREINT.length() + 1, i);
-        	    value = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    name = code_currentLine.substring(COMMAND_DECLAREINT.length() + 1, i);
+	        	    value = code_currentLine.substring(i + 1);
+	        	}
             }
     
             if(!var_DATA.nameIsPresent(name))
             {
-        	try
-        	{
-        	    var_ints.add(name, Integer.parseInt(value));
-        	    var_DATA.add(name, DECLAREINT);
-
-        	    program_updateVariableList();
-        	    code_currentLineNum++;
-        	    return true;
-        	}
-        	catch (NumberFormatException e)
-        	{
-        	    error_throwError(code_currentLineNum, value + " is not an int");
-        	    return false;
-        	}
+	        	try
+	        	{
+	        	    var_ints.add(name, Integer.parseInt(value));
+	        	    var_DATA.add(name, COMMAND_DECLAREINT);
+	
+	        	    program_updateVariableList();
+	        	    code_currentLineNum++;
+	        	    return true;
+	        	}
+	        	catch (NumberFormatException e)
+	        	{
+	        	    error_throwError(code_currentLineNum, value + " is not an int");
+	        	    return false;
+	        	}
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not initialize int " + name + " because the name is already in use");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not initialize int " + name + " because the name is already in use");
+	        	return false;
             }
         }
         
-        //DECLARESTRING
+        //COMMAND_DECLARESTRING
         else if(condition_lineDeclaresString())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLARESTRING.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLARESTRING.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    name = code_currentLine.substring(DECLARESTRING.length() + 1, i);
-        	    value = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    name = code_currentLine.substring(COMMAND_DECLARESTRING.length() + 1, i);
+	        	    value = code_currentLine.substring(i + 1);
+	        	}
             }
     
             if(!var_DATA.nameIsPresent(name))
             { 
-        	var_strings.add(name, value);
-        	var_DATA.add(name, DECLARESTRING);
-        	
-        	program_updateVariableList();
-        	code_currentLineNum++;
-        	return true;
+	        	var_strings.add(name, value);
+	        	var_DATA.add(name, COMMAND_DECLARESTRING);
+	        	
+	        	program_updateVariableList();
+	        	code_currentLineNum++;
+	        	return true;
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not initialize string " + name + " because the name is already in use");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not initialize string " + name + " because the name is already in use");
+	        	return false;
             }
         }
         
-        //DECLAREBOOLEAN
+        //COMMAND_DECLAREBOOLEAN
         else if(condition_lineDeclaresBoolean())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREBOOLEAN.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREBOOLEAN.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    name = code_currentLine.substring(DECLAREBOOLEAN.length() + 1, i);
-        	    value = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    name = code_currentLine.substring(COMMAND_DECLAREBOOLEAN.length() + 1, i);
+	        	    value = code_currentLine.substring(i + 1);
+	        	}
             }
     
             if(!var_DATA.nameIsPresent(name))
             {
-        	if(value.equals("true") || value.equals("false"))
-        	{
-        	    var_booleans.add(name, Boolean.parseBoolean(value));
-        	    var_DATA.add(name, DECLAREBOOLEAN);
-        	    
-        	    program_updateVariableList();
-        	    code_currentLineNum++;
-        	    return true;
-        	}
-        	else
-        	{
-        	    error_throwError(code_currentLineNum, value + " is not a boolean");
-        	    return false;
-        	}
+	        	if(value.equals("true") || value.equals("false"))
+	        	{
+	        	    var_booleans.add(name, Boolean.parseBoolean(value));
+	        	    var_DATA.add(name, COMMAND_DECLAREBOOLEAN);
+	        	    
+	        	    program_updateVariableList();
+	        	    code_currentLineNum++;
+	        	    return true;
+	        	}
+	        	else
+	        	{
+	        	    error_throwError(code_currentLineNum, value + " is not a boolean");
+	        	    return false;
+	        	}
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not initialize boolean " + name + " because the name is already in use");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not initialize boolean " + name + " because the name is already in use");
+	        	return false;
             }
         }
         
-        //DECLAREDOUBLE
+        //COMMAND_DECLAREDOUBLE
         else if(condition_lineDeclaresDouble())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREDOUBLE.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREDOUBLE.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    name = code_currentLine.substring(DECLAREDOUBLE.length() + 1, i);
-        	    value = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    name = code_currentLine.substring(COMMAND_DECLAREDOUBLE.length() + 1, i);
+	        	    value = code_currentLine.substring(i + 1);
+	        	}
             }
     
             if(!var_DATA.nameIsPresent(name))
             {
-        	try
-        	{
-        	    var_doubles.add(name, Double.parseDouble(value));
-        	    var_DATA.add(name, DECLAREDOUBLE);  
-        	    
-        	    program_updateVariableList();
-        	    code_currentLineNum++;
-        	    return true;
-        	}
-        	catch (NumberFormatException e)
-        	{
-        	    error_throwError(code_currentLineNum, value + " is not a double");
-        	    return false;
-        	}
+	        	try
+	        	{
+	        	    var_doubles.add(name, Double.parseDouble(value));
+	        	    var_DATA.add(name, COMMAND_DECLAREDOUBLE);  
+	        	    
+	        	    program_updateVariableList();
+	        	    code_currentLineNum++;
+	        	    return true;
+	        	}
+	        	catch (NumberFormatException e)
+	        	{
+	        	    error_throwError(code_currentLineNum, value + " is not a double");
+	        	    return false;
+	        	}
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not initialize double " + name + " because the name is already in use");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not initialize double " + name + " because the name is already in use");
+	        	return false;
             }
         }
         
         //DELETES
         else if(condition_lineDeletes())
         {
-            String name = code_currentLine.substring(DELETE.length() + 1);
+            String name = code_currentLine.substring(COMMAND_DELETE.length() + 1);
     
             if(var_DATA.nameIsPresent(name))
             {
-        	if(var_DATA.get(name).equals(DECLAREINT))
-        	{
-        	    var_ints.delete(name);
-        	}
-            
-        	if(var_DATA.get(name).equals(DECLARESTRING))
-        	{
-        	    var_strings.delete(name);
-        	}
-        
-        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-        	{
-        	    var_booleans.delete(name);
-        	}
-        
-        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
-        	{
-        	    var_doubles.delete(name);
-        	}
-        
-        	var_DATA.delete(name);
-        	
-        	program_updateVariableList();
-        	code_currentLineNum++;
-        	return true;
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
+	        	{
+	        	    var_ints.delete(name);
+	        	}
+	            
+	        	if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+	        	{
+	        	    var_strings.delete(name);
+	        	}
+	        
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+	        	{
+	        	    var_booleans.delete(name);
+	        	}
+	        
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+	        	{
+	        	    var_doubles.delete(name);
+	        	}
+	        
+	        	var_DATA.delete(name);
+	        	
+	        	program_updateVariableList();
+	        	code_currentLineNum++;
+	        	return true;
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not delete variable " + name + " because the variable does not exist");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not delete variable " + name + " because the variable does not exist");
+	        	return false;
             }
         }
           
@@ -413,88 +413,88 @@ public class Program
             String name = "";
             String value = "";
     
-            for(int i = SET.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_SET.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    name = code_currentLine.substring(SET.length() + 1, i);
-        	    value = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    name = code_currentLine.substring(COMMAND_SET.length() + 1, i);
+	        	    value = code_currentLine.substring(i + 1);
+	        	}
             }
     
             if(var_DATA.nameIsPresent(name))
             {
-        	if(var_DATA.get(name).equals(DECLAREINT))
-        	{
-        	    try
-        	    {
-        		var_ints.set(name, Integer.parseInt(value));
-        		
-        		program_updateVariableList();
-        		code_currentLineNum++;
-        		return true;
-        	    }
-        	    catch (NumberFormatException e)
-        	    {
-        		error_throwError(code_currentLineNum, value + " is not an int");
-        		return false;
-        	    }
-        	}
-            
-        	if(var_DATA.get(name).equals(DECLARESTRING))
-        	{
-        	    var_strings.set(name, value);
-        	    
-        	    program_updateVariableList();
-        	    code_currentLineNum++;
-        	    return true;
-        	}
-            
-        	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
-        	{
-        	    if(value.equals("true") || value.equals("false"))
-        	    {
-        		var_booleans.set(name, Boolean.parseBoolean(value));
-        		
-        		program_updateVariableList();
-        		code_currentLineNum++;
-        		return true;
-        	    }
-        	    else
-        	    {
-        		error_throwError(code_currentLineNum, value + " is not a boolean");
-        		return false;
-        	    }
-        	}
-
-        	if(var_DATA.get(name).equals(DECLAREDOUBLE))
-        	{    
-        	    try
-        	    {
-        		var_doubles.set(name, Double.parseDouble(value));
-        		
-        		program_updateVariableList();
-        		code_currentLineNum++;
-        		return true;
-        	    }
-        	    catch(NumberFormatException e)
-        	    {
-        		error_throwError(code_currentLineNum, value + " is not an double");
-        		return false;
-        	    }
-        	}
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
+	        	{
+	        	    try
+	        	    {
+		        		var_ints.set(name, Integer.parseInt(value));
+		        		
+		        		program_updateVariableList();
+		        		code_currentLineNum++;
+		        		return true;
+	        	    }
+	        	    catch (NumberFormatException e)
+	        	    {
+		        		error_throwError(code_currentLineNum, value + " is not an int");
+		        		return false;
+	        	    }
+	        	}
+	            
+	        	if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+	        	{
+	        	    var_strings.set(name, value);
+	        	    
+	        	    program_updateVariableList();
+	        	    code_currentLineNum++;
+	        	    return true;
+	        	}
+	            
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+	        	{
+	        	    if(value.equals("true") || value.equals("false"))
+	        	    {
+		        		var_booleans.set(name, Boolean.parseBoolean(value));
+		        		
+		        		program_updateVariableList();
+		        		code_currentLineNum++;
+		        		return true;
+	        	    }
+	        	    else
+	        	    {
+		        		error_throwError(code_currentLineNum, value + " is not a boolean");
+		        		return false;
+	        	    }
+	        	}
+	
+	        	if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+	        	{    
+	        	    try
+	        	    {
+		        		var_doubles.set(name, Double.parseDouble(value));
+		        		
+		        		program_updateVariableList();
+		        		code_currentLineNum++;
+		        		return true;
+	        	    }
+	        	    catch(NumberFormatException e)
+	        	    {
+		        		error_throwError(code_currentLineNum, value + " is not an double");
+		        		return false;
+	        	    }
+	        	}
             }
             else
             {
-        	error_throwError(code_currentLineNum, "Could not set variable " + name + " because the variable does not exist");
-        	return false;
+	        	error_throwError(code_currentLineNum, "Could not set variable " + name + " because the variable does not exist");
+	        	return false;
             }
         }
         
         //PRINTS
         else if(condition_linePrints())
         {
-            String value = code_currentLine.substring(PRINT.length() + 1);
+            String value = code_currentLine.substring(COMMAND_PRINT.length() + 1);
             GUIHandler.update_output(value);
             
             code_currentLineNum++;
@@ -515,22 +515,22 @@ public class Program
             String value1 = "";
             String value2 = "";
         
-            for(int i = STARTIF.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_STARTIF.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    value1 = code_currentLine.substring(STARTIF.length() + 1, i);
-        	    value2 = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    value1 = code_currentLine.substring(COMMAND_STARTIF.length() + 1, i);
+	        	    value2 = code_currentLine.substring(i + 1);
+	        	}
             }     
             
             if(!value1.equals(value2))
             {
                 for(int i = code_currentLineNum; i < code_numberOfLines; i++)
                 {
-                    if(code_code[i].equals(ENDIF))
+                    if(code_code[i].equals(COMMAND_ENDIF))
                     {
-                        code_currentLineNum = i;
+                        code_currentLineNum = i + 1;
                         return true;
                     }
                     
@@ -543,17 +543,18 @@ public class Program
             }
             else
             {
-        	code_currentLineNum++;
-        	return true;
+	        	code_currentLineNum++;
+	        	return true;
             }
         }
+       
         
-        //TODO: optimize?
         else if(condition_lineEndsIf())
         {
             code_currentLineNum++;
             return true;
         }
+        
         
         //while
         else if(condition_lineStartsWhile())
@@ -561,20 +562,20 @@ public class Program
             String value1 = "";
             String value2 = "";
         
-            for(int i = STARTWHILE.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_STARTWHILE.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_currentLine.charAt(i) == ' ')
-        	{
-        	    value1 = code_currentLine.substring(STARTWHILE.length() + 1, i);
-        	    value2 = code_currentLine.substring(i + 1);
-        	}
+	        	if(code_currentLine.charAt(i) == ' ')
+	        	{
+	        	    value1 = code_currentLine.substring(COMMAND_STARTWHILE.length() + 1, i);
+	        	    value2 = code_currentLine.substring(i + 1);
+	        	}
             }     
             
             if(!value1.equals(value2))
             {
-        	for(int i = code_currentLineNum; i < code_numberOfLines; i++)
+            	for(int i = code_currentLineNum; i < code_numberOfLines; i++)
                 {
-                    if(code_code[i].equals(ENDWHILE))
+                    if(code_code[i].equals(COMMAND_ENDWHILE))
                     {
                         code_currentLineNum = i + 1;
                         return true;
@@ -589,8 +590,8 @@ public class Program
             }
             else
             {
-        	code_currentLineNum++;
-        	return true;
+	        	code_currentLineNum++;
+	        	return true;
             }
         }
         
@@ -598,11 +599,12 @@ public class Program
         {
             for(int i = code_currentLineNum; i > 0; i--)
             {
-        	if(code_code[i].startsWith(STARTWHILE))
-        	{
-        	    code_currentLineNum = i;
-        	}
+	        	if(code_code[i].startsWith(COMMAND_STARTWHILE))
+	        	{
+	        	    code_currentLineNum = i;
+	        	}
             }
+            
             return true;
         }
         
@@ -612,12 +614,24 @@ public class Program
             return false;
         }
           
-	return true;	
+        return true;	
+    }
+    
+    public boolean program_isDone()
+    {
+    	if(code_currentLineNum == code_numberOfLines)
+    	{
+    		return true;
+    	}
+    	else
+    	{
+    		return false;
+    	}
     }
 
     private void program_updateVariableList()
     {
-	GUIHandler.update_variables_clear();
+    	GUIHandler.update_variables_clear();
         
         for(int i = 0; i < var_variables.length; i++)
         {
@@ -627,7 +641,7 @@ public class Program
     
     private boolean condition_startIsPresent()
     {
-        if(code_code[0].equals(STARTCOMMAND))
+        if(code_code[0].equals(COMMAND_START))
         {
             return true;
         }
@@ -640,7 +654,7 @@ public class Program
     
     private boolean condition_endIsPresent()
     {
-        if(code_code[code_code.length - 1].equals(ENDCOMMAND))
+        if(code_code[code_code.length - 1].equals(COMMAND_END))
         {
             return true;
         }
@@ -653,7 +667,7 @@ public class Program
     
     private boolean condition_lineIsStart()
     {
-	if(code_currentLine.equals(STARTCOMMAND))
+    	if(code_currentLine.equals(COMMAND_START))
         {
             return true;
         }
@@ -665,7 +679,7 @@ public class Program
     
     private boolean condition_lineIsEnd()
     {
-	if(code_currentLine.equals(ENDCOMMAND))
+    	if(code_currentLine.equals(COMMAND_END))
         {
             return true;
         }
@@ -677,7 +691,7 @@ public class Program
     
     private boolean condition_lineDeclaresInt()
     {        
-        if(code_currentLine.startsWith(DECLAREINT))
+        if(code_currentLine.startsWith(COMMAND_DECLAREINT))
         {
             return true;
         }
@@ -689,7 +703,7 @@ public class Program
     
     private boolean condition_lineDeclaresString()
     {
-        if(code_currentLine.startsWith(DECLARESTRING))
+        if(code_currentLine.startsWith(COMMAND_DECLARESTRING))
         {
             return true;
         }
@@ -701,7 +715,7 @@ public class Program
     
     private boolean condition_lineDeclaresBoolean()
     {
-        if(code_currentLine.startsWith(DECLAREBOOLEAN))
+        if(code_currentLine.startsWith(COMMAND_DECLAREBOOLEAN))
         {
             return true;
         }
@@ -713,7 +727,7 @@ public class Program
 
     private boolean condition_lineDeclaresDouble()
     {
-        if(code_currentLine.startsWith(DECLAREDOUBLE))
+        if(code_currentLine.startsWith(COMMAND_DECLAREDOUBLE))
         {
             return true;
         }
@@ -725,7 +739,7 @@ public class Program
     
     private boolean condition_lineDeletes()
     {
-        if(code_currentLine.startsWith(DELETE))
+        if(code_currentLine.startsWith(COMMAND_DELETE))
         {
             return true;
         }
@@ -737,7 +751,7 @@ public class Program
     
     private boolean condition_lineSets()
     {
-        if(code_currentLine.startsWith(SET))
+        if(code_currentLine.startsWith(COMMAND_SET))
         {
             return true;
         }
@@ -749,7 +763,7 @@ public class Program
     
     private boolean condition_lineGets()
     {
-        if(code_currentLine.contains(GET))
+        if(code_currentLine.contains(COMMAND_GET))
         {
             return true;
         }
@@ -761,7 +775,7 @@ public class Program
     
     private boolean condition_linePrints()
     {
-        if(code_currentLine.startsWith(PRINT + " "))
+        if(code_currentLine.startsWith(COMMAND_PRINT + " "))
         {
             return true;
         }
@@ -773,7 +787,7 @@ public class Program
     
     private boolean condition_linePrintsNewLine()
     {
-        if(code_currentLine.startsWith(PRINTNEWLINE))
+        if(code_currentLine.startsWith(COMMAND_PRINTNEWLINE))
         {
             return true;
         }
@@ -785,7 +799,7 @@ public class Program
     
     private boolean condition_lineEvaluates()
     {
-        if(code_currentLine.contains(EVALUATEEXPRESSION))
+        if(code_currentLine.contains(COMMAND_EVALUATEEXPRESSION))
         {
             return true;
         }
@@ -797,7 +811,7 @@ public class Program
     
     private boolean condition_lineStartsIf()
     {
-        if(code_currentLine.startsWith(STARTIF))
+        if(code_currentLine.startsWith(COMMAND_STARTIF))
         {
             return true;
         }
@@ -809,7 +823,7 @@ public class Program
     
     private boolean condition_lineEndsIf()
     {
-        if(code_currentLine.equals(ENDIF))
+        if(code_currentLine.equals(COMMAND_ENDIF))
         {
             return true;
         }
@@ -821,7 +835,7 @@ public class Program
     
     private boolean condition_lineStartsWhile()
     {
-        if(code_currentLine.startsWith(STARTWHILE))
+        if(code_currentLine.startsWith(COMMAND_STARTWHILE))
         {
             return true;
         }
@@ -833,7 +847,7 @@ public class Program
     
     private boolean condition_lineEndsWhile()
     {
-        if(code_currentLine.equals(ENDWHILE))
+        if(code_currentLine.equals(COMMAND_ENDWHILE))
         {
             return true;
         }
