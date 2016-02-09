@@ -7,7 +7,7 @@ import javax.swing.*;
 public class GUIHandler
 {
     //initialize frame
-    private static JFrame mainFrame;
+    private static JFrame component_mainFrame;
 
     //initialize components
     private static JTextArea component_input;
@@ -37,15 +37,13 @@ public class GUIHandler
     private static JMenuItem menu_file_new_program;
     private static JMenuItem menu_program_run;
     private static JMenuItem menu_program_stepbystep;
-    private static JMenuItem menu_program_previousstep;    
-    private static JMenuItem menu_program_nextstep;
 
     //initialize inputs
     public static String component_output_text = "";
     public static String component_variables_text = "";
 
     //initialize programs
-    private static Program currentProgram;
+    private static Program program_currentProgram;
 
     public static void main(String[] args)
     {
@@ -67,10 +65,10 @@ public class GUIHandler
     
     private static void instantiate_frame()
     {
-        mainFrame = new JFrame("grgCode");
-        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        mainFrame.setLayout(new GridBagLayout());
-        mainFrame.setResizable(false);
+        component_mainFrame = new JFrame("grgCode");
+        component_mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        component_mainFrame.setLayout(new GridBagLayout());
+        component_mainFrame.setResizable(false);
     }
     
     private static void instantiate_components()
@@ -111,8 +109,6 @@ public class GUIHandler
         //create main/program
         menu_program_run = new JMenuItem("Run");
         menu_program_stepbystep = new JMenuItem("Step-by-step");
-        menu_program_previousstep = new JMenuItem("Previous step");
-        menu_program_nextstep = new JMenuItem("Next step");
     
         //TODO: ADD FUNCTIONALITY
         menu_file_clear.addActionListener(new ActionListener()
@@ -131,10 +127,26 @@ public class GUIHandler
                 public void actionPerformed(ActionEvent e) 
                 {
                     update_output_clear();
-                    currentProgram = null;
-                    currentProgram = new Program(component_input.getText());
-                    currentProgram.program_process();
+                    program_currentProgram = null;
+                    program_currentProgram = new Program(component_input.getText());
+                    program_currentProgram.program_preprocess();
+                    program_currentProgram.program_process();
                 }
+            });
+        
+        menu_program_stepbystep.addActionListener(new ActionListener()
+            {
+		@Override
+		public void actionPerformed(ActionEvent arg0) 
+		{
+		    if(program_currentProgram == null)
+		    {
+			program_currentProgram = new Program(component_input.getText());
+			program_currentProgram.program_preprocess();
+		    }
+		    
+		    program_currentProgram.program_processLine();
+		}          
             });
     
     
@@ -148,9 +160,7 @@ public class GUIHandler
     
         menu_program.add(menu_program_run);
         menu_program.add(menu_program_stepbystep);
-        menu_program.add(menu_program_previousstep);
-        menu_program.add(menu_program_nextstep);
-    
+
         menu_mainBar.add(menu_file);
         menu_mainBar.add(menu_edit);
         menu_mainBar.add(menu_program);
@@ -191,14 +201,14 @@ public class GUIHandler
     
     private static void instantiate_finalize()
     {
-        mainFrame.add(component_inputScrollPane, constraints_input);
-        mainFrame.add(component_outputScrollPane, constraints_output);
-        mainFrame.add(component_variablesScrollPane, constraints_variables);
+	component_mainFrame.add(component_inputScrollPane, constraints_input);
+	component_mainFrame.add(component_outputScrollPane, constraints_output);
+	component_mainFrame.add(component_variablesScrollPane, constraints_variables);
     
-        mainFrame.setJMenuBar(menu_mainBar);
+	component_mainFrame.setJMenuBar(menu_mainBar);
     
-        mainFrame.pack();
-        mainFrame.setVisible(true);
+	component_mainFrame.pack();
+	component_mainFrame.setVisible(true);
     }
     
     public static void update_output(String update)

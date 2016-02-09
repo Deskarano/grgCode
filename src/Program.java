@@ -6,7 +6,8 @@ public class Program
     private String code_rawCode;
     private String[] code_code;
     private int code_numberOfLines;
-    private int code_currentLine;
+    private int code_currentLineNum;
+    private String code_currentLine;
     
     //variable variables
     private Storage var_ints;
@@ -43,7 +44,7 @@ public class Program
         code_rawCode = code;
         code_rawCode += "\n";
         code_numberOfLines = 0;
-        code_currentLine = 0;
+        code_currentLineNum = 0;
              
         var_ints = new Storage(DECLAREINT);
         var_strings = new Storage(DECLARESTRING);
@@ -58,7 +59,7 @@ public class Program
         var_DATA = new Storage("");
     }
     
-    public void program_process()
+    public void program_preprocess()
     {
         //count number of newline characters in the program
         for(int i = 0; i < code_rawCode.length(); i++)
@@ -107,127 +108,129 @@ public class Program
         	code_code[lastCodeIndex] = temp[i];
         	lastCodeIndex++;
             }
-        }
-        
-        if(condition_startIsPresent() && condition_endIsPresent()) 
+        }                
+    }
+    
+    public void program_process()
+    {
+	if(condition_startIsPresent() && condition_endIsPresent()) 
         {
-	    while(code_currentLine < code_numberOfLines)
+	    while(code_currentLineNum < code_numberOfLines)
 	    {
-		System.out.println("Processing " + code_code[code_currentLine]);
-		
 		if(!program_processLine())
 		{
-		    code_currentLine = code_numberOfLines;
-		}
-		else
-		{
-		    program_updateVariableList();
+		    code_currentLineNum = code_numberOfLines;
 		}
 	    }
+	    
+	    //System.out.println("----------------------------");
 	}
     }
 
-    private boolean program_processLine()
+    public boolean program_processLine()
     {
+	code_currentLine = code_code[code_currentLineNum];
+	//System.out.println("Processing " + code_currentLine);
+	
 	//start
-	if(condition_lineIsStart(code_currentLine))
+	if(condition_lineIsStart())
 	{
-	    code_currentLine++;
+	    code_currentLineNum++;
 	    return true;
 	}
 	
 	//end
-	if(condition_lineIsEnd(code_currentLine))
+	if(condition_lineIsEnd())
 	{
-	    code_currentLine++;
+	    code_currentLineNum++;
 	    return true;
 	}
 	
         //GETS
-        while(condition_lineGets(code_currentLine))
+        while(condition_lineGets())
         {
             String name = "";
             int index = -1;
             int secondSpaceIndex = -1;
     
-            index = code_code[code_currentLine].indexOf(GET);
-            secondSpaceIndex = code_code[code_currentLine].indexOf(' ', index + GET.length() + 1);        
+            index = code_currentLine.indexOf(GET);
+            secondSpaceIndex = code_currentLine.indexOf(' ', index + GET.length() + 1);        
 
             if(secondSpaceIndex == -1)
     	    {
-        	name = code_code[code_currentLine].substring(index + GET.length() + 1);
+        	name = code_currentLine.substring(index + GET.length() + 1);
     	    }
     	    else
     	    {
-    		name = code_code[code_currentLine].substring(index + GET.length() + 1, secondSpaceIndex);
+    		name = code_currentLine.substring(index + GET.length() + 1, secondSpaceIndex);
     	    }
     
             if(var_DATA.nameIsPresent(name))
             {
-        	String firstHalf = code_code[code_currentLine].substring(0, index);
+        	String firstHalf = code_currentLine.substring(0, index);
         	String secondHalf = "";
             
         	if(!(secondSpaceIndex == -1))
         	{
-        	    secondHalf = code_code[code_currentLine].substring(secondSpaceIndex);
+        	    secondHalf = code_currentLine.substring(secondSpaceIndex);
         	}
             
-        	code_code[code_currentLine] = firstHalf;
+        	code_currentLine = firstHalf;
         
         	if(var_DATA.get(name).equals(DECLAREINT))
         	{
-        	    code_code[code_currentLine] += var_ints.get(name);
+        	    code_currentLine += var_ints.get(name);
         	}
         
         	if(var_DATA.get(name).equals(DECLARESTRING))
         	{
-        	    code_code[code_currentLine] += var_strings.get(name);
+        	    code_currentLine += var_strings.get(name);
         	}
         
         	if(var_DATA.get(name).equals(DECLAREBOOLEAN))
         	{
-        	    code_code[code_currentLine] += var_booleans.get(name);
+        	    code_currentLine += var_booleans.get(name);
         	}
         
         	if(var_DATA.get(name).equals(DECLAREDOUBLE))
         	{
-        	    code_code[code_currentLine] += var_doubles.get(name);
+        	    code_currentLine += var_doubles.get(name);
         	}
             
-        	code_code[code_currentLine] += secondHalf;
+        	code_currentLine += secondHalf;
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not get variable " + name + " because the variable does not exist");
+        	error_throwError(code_currentLineNum, "Could not get variable " + name + " because the variable does not exist");
         	return false;
             }
         }
         
         //EVALUATES
-        if(condition_lineEvaluates(code_currentLine))
+        if(condition_lineEvaluates())
         {
             String input = "";
             int index = 0;
         
-            index = code_code[code_currentLine].indexOf(EVALUATEEXPRESSION);
-            input = code_code[code_currentLine].substring(index + EVALUATEEXPRESSION.length() + 1);       
+            index = code_currentLine.indexOf(EVALUATEEXPRESSION);
+            input = code_currentLine.substring(index + EVALUATEEXPRESSION.length() + 1);       
 
-            code_code[code_currentLine] = code_code[code_currentLine].substring(0, index);
-            code_code[code_currentLine] += new MathEvaluation(input).getResult();
+            code_currentLine = code_currentLine.substring(0, index);
+            code_currentLine += new MathEvaluation(input).getResult();
         }
             
         //DECLAREINT
-        if(condition_lineDeclaresInt(code_currentLine))
+        if(condition_lineDeclaresInt())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREINT.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = DECLAREINT.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    name = code_code[code_currentLine].substring(DECLAREINT.length() + 1, i);
-        	    value = code_code[code_currentLine].substring(i + 1);
+        	    name = code_currentLine.substring(DECLAREINT.length() + 1, i);
+        	    value = code_currentLine.substring(i + 1);
         	}
             }
     
@@ -238,34 +241,35 @@ public class Program
         	    var_ints.add(name, Integer.parseInt(value));
         	    var_DATA.add(name, DECLAREINT);
 
-        	    code_currentLine++;
+        	    program_updateVariableList();
+        	    code_currentLineNum++;
         	    return true;
         	}
         	catch (NumberFormatException e)
         	{
-        	    error_throwError(code_currentLine, value + " is not an int");
+        	    error_throwError(code_currentLineNum, value + " is not an int");
         	    return false;
         	}
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not initialize int " + name + " because the name is already in use");
+        	error_throwError(code_currentLineNum, "Could not initialize int " + name + " because the name is already in use");
         	return false;
             }
         }
         
         //DECLARESTRING
-        else if(condition_lineDeclaresString(code_currentLine))
+        else if(condition_lineDeclaresString())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLARESTRING.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = DECLARESTRING.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    name = code_code[code_currentLine].substring(DECLARESTRING.length() + 1, i);
-        	    value = code_code[code_currentLine].substring(i + 1);
+        	    name = code_currentLine.substring(DECLARESTRING.length() + 1, i);
+        	    value = code_currentLine.substring(i + 1);
         	}
             }
     
@@ -274,28 +278,29 @@ public class Program
         	var_strings.add(name, value);
         	var_DATA.add(name, DECLARESTRING);
         	
-        	code_currentLine++;
+        	program_updateVariableList();
+        	code_currentLineNum++;
         	return true;
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not initialize string " + name + " because the name is already in use");
+        	error_throwError(code_currentLineNum, "Could not initialize string " + name + " because the name is already in use");
         	return false;
             }
         }
         
         //DECLAREBOOLEAN
-        else if(condition_lineDeclaresBoolean(code_currentLine))
+        else if(condition_lineDeclaresBoolean())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREBOOLEAN.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = DECLAREBOOLEAN.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    name = code_code[code_currentLine].substring(DECLAREBOOLEAN.length() + 1, i);
-        	    value = code_code[code_currentLine].substring(i + 1);
+        	    name = code_currentLine.substring(DECLAREBOOLEAN.length() + 1, i);
+        	    value = code_currentLine.substring(i + 1);
         	}
             }
     
@@ -306,34 +311,35 @@ public class Program
         	    var_booleans.add(name, Boolean.parseBoolean(value));
         	    var_DATA.add(name, DECLAREBOOLEAN);
         	    
-        	    code_currentLine++;
+        	    program_updateVariableList();
+        	    code_currentLineNum++;
         	    return true;
         	}
         	else
         	{
-        	    error_throwError(code_currentLine, value + " is not a boolean");
+        	    error_throwError(code_currentLineNum, value + " is not a boolean");
         	    return false;
         	}
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not initialize boolean " + name + " because the name is already in use");
+        	error_throwError(code_currentLineNum, "Could not initialize boolean " + name + " because the name is already in use");
         	return false;
             }
         }
         
         //DECLAREDOUBLE
-        else if(condition_lineDeclaresDouble(code_currentLine))
+        else if(condition_lineDeclaresDouble())
         {
             String name = "";
             String value = "";
     
-            for(int i = DECLAREDOUBLE.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = DECLAREDOUBLE.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    name = code_code[code_currentLine].substring(DECLAREDOUBLE.length() + 1, i);
-        	    value = code_code[code_currentLine].substring(i + 1);
+        	    name = code_currentLine.substring(DECLAREDOUBLE.length() + 1, i);
+        	    value = code_currentLine.substring(i + 1);
         	}
             }
     
@@ -344,26 +350,27 @@ public class Program
         	    var_doubles.add(name, Double.parseDouble(value));
         	    var_DATA.add(name, DECLAREDOUBLE);  
         	    
-        	    code_currentLine++;
+        	    program_updateVariableList();
+        	    code_currentLineNum++;
         	    return true;
         	}
         	catch (NumberFormatException e)
         	{
-        	    error_throwError(code_currentLine, value + " is not a double");
+        	    error_throwError(code_currentLineNum, value + " is not a double");
         	    return false;
         	}
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not initialize double " + name + " because the name is already in use");
+        	error_throwError(code_currentLineNum, "Could not initialize double " + name + " because the name is already in use");
         	return false;
             }
         }
         
         //DELETES
-        else if(condition_lineDeletes(code_currentLine))
+        else if(condition_lineDeletes())
         {
-            String name = code_code[code_currentLine].substring(DELETE.length() + 1);
+            String name = code_currentLine.substring(DELETE.length() + 1);
     
             if(var_DATA.nameIsPresent(name))
             {
@@ -389,28 +396,29 @@ public class Program
         
         	var_DATA.delete(name);
         	
-        	code_currentLine++;
+        	program_updateVariableList();
+        	code_currentLineNum++;
         	return true;
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not delete variable " + name + " because the variable does not exist");
+        	error_throwError(code_currentLineNum, "Could not delete variable " + name + " because the variable does not exist");
         	return false;
             }
         }
           
         //SETS
-        else if(condition_lineSets(code_currentLine))
+        else if(condition_lineSets())
         {
             String name = "";
             String value = "";
     
-            for(int i = SET.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = SET.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    name = code_code[code_currentLine].substring(SET.length() + 1, i);
-        	    value = code_code[code_currentLine].substring(i + 1);
+        	    name = code_currentLine.substring(SET.length() + 1, i);
+        	    value = code_currentLine.substring(i + 1);
         	}
             }
     
@@ -422,12 +430,13 @@ public class Program
         	    {
         		var_ints.set(name, Integer.parseInt(value));
         		
-        		code_currentLine++;
+        		program_updateVariableList();
+        		code_currentLineNum++;
         		return true;
         	    }
         	    catch (NumberFormatException e)
         	    {
-        		error_throwError(code_currentLine, value + " is not an int");
+        		error_throwError(code_currentLineNum, value + " is not an int");
         		return false;
         	    }
         	}
@@ -436,7 +445,8 @@ public class Program
         	{
         	    var_strings.set(name, value);
         	    
-        	    code_currentLine++;
+        	    program_updateVariableList();
+        	    code_currentLineNum++;
         	    return true;
         	}
             
@@ -446,12 +456,13 @@ public class Program
         	    {
         		var_booleans.set(name, Boolean.parseBoolean(value));
         		
-        		code_currentLine++;
+        		program_updateVariableList();
+        		code_currentLineNum++;
         		return true;
         	    }
         	    else
         	    {
-        		error_throwError(code_currentLine, value + " is not a boolean");
+        		error_throwError(code_currentLineNum, value + " is not a boolean");
         		return false;
         	    }
         	}
@@ -462,148 +473,142 @@ public class Program
         	    {
         		var_doubles.set(name, Double.parseDouble(value));
         		
-        		code_currentLine++;
+        		program_updateVariableList();
+        		code_currentLineNum++;
         		return true;
         	    }
         	    catch(NumberFormatException e)
         	    {
-        		error_throwError(code_currentLine, value + " is not an double");
+        		error_throwError(code_currentLineNum, value + " is not an double");
         		return false;
         	    }
         	}
             }
             else
             {
-        	error_throwError(code_currentLine, "Could not set variable " + name + " because the variable does not exist");
+        	error_throwError(code_currentLineNum, "Could not set variable " + name + " because the variable does not exist");
         	return false;
             }
         }
         
         //PRINTS
-        else if(condition_linePrints(code_currentLine))
+        else if(condition_linePrints())
         {
-            String value = code_code[code_currentLine].substring(PRINT.length() + 1);
+            String value = code_currentLine.substring(PRINT.length() + 1);
             GUIHandler.update_output(value);
             
-            code_currentLine++;
+            code_currentLineNum++;
             return true;
         }
         
-        else if(condition_linePrintsNewLine(code_currentLine))
+        else if(condition_linePrintsNewLine())
         {
             GUIHandler.update_output("\n");
             
-            code_currentLine++;
+            code_currentLineNum++;
             return true;
         }
         
         //IF
-        else if(condition_lineStartsIf(code_currentLine))
+        else if(condition_lineStartsIf())
         {
             String value1 = "";
             String value2 = "";
         
-            for(int i = STARTIF.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = STARTIF.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    value1 = code_code[code_currentLine].substring(STARTIF.length() + 1, i);
-        	    value2 = code_code[code_currentLine].substring(i + 1);
+        	    value1 = code_currentLine.substring(STARTIF.length() + 1, i);
+        	    value2 = code_currentLine.substring(i + 1);
         	}
             }     
             
             if(!value1.equals(value2))
             {
-                for(int i = code_currentLine; i < code_numberOfLines; i++)
+                for(int i = code_currentLineNum; i < code_numberOfLines; i++)
                 {
-                    if(condition_lineEndsIf(i))
+                    if(code_code[i].equals(ENDIF))
                     {
-                        code_currentLine = i;
+                        code_currentLineNum = i;
                         return true;
                     }
                     
                     if(i == code_numberOfLines - 1)
                     {
-                        error_throwError(code_currentLine, "Could not find endIf statement");
+                        error_throwError(code_currentLineNum, "Could not find endIf statement");
                         return false;
                     }
                 }
             }
             else
             {
-        	code_currentLine++;
+        	code_currentLineNum++;
         	return true;
             }
         }
         
         //TODO: optimize?
-        else if(condition_lineEndsIf(code_currentLine))
+        else if(condition_lineEndsIf())
         {
-            code_currentLine++;
+            code_currentLineNum++;
             return true;
         }
         
         //while
-        else if(condition_lineStartsWhile(code_currentLine))
+        else if(condition_lineStartsWhile())
         {
             String value1 = "";
             String value2 = "";
-            int lineOfStart = code_currentLine;
         
-            for(int i = STARTWHILE.length() + 1; i < code_code[code_currentLine].length(); i++)
+            for(int i = STARTWHILE.length() + 1; i < code_currentLine.length(); i++)
             {
-        	if(code_code[code_currentLine].charAt(i) == ' ')
+        	if(code_currentLine.charAt(i) == ' ')
         	{
-        	    value1 = code_code[code_currentLine].substring(STARTWHILE.length() + 1, i);
-        	    value2 = code_code[code_currentLine].substring(i + 1);
+        	    value1 = code_currentLine.substring(STARTWHILE.length() + 1, i);
+        	    value2 = code_currentLine.substring(i + 1);
         	}
             }     
             
-            int lineOfEnd = 0;
-            
-            for(int i = code_currentLine; i < code_numberOfLines; i++)
+            if(!value1.equals(value2))
             {
-        	if(condition_lineEndsWhile(i))
-        	{
-        	    lineOfEnd = i;
-        	    i = code_numberOfLines;
-        	}
-        	
-                if(i == code_numberOfLines - 1)
+        	for(int i = code_currentLineNum; i < code_numberOfLines; i++)
                 {
-                    error_throwError(code_currentLine, "Could not find endWhile statement");
-                    return false;
+                    if(code_code[i].equals(ENDWHILE))
+                    {
+                        code_currentLineNum = i + 1;
+                        return true;
+                    }
+                    
+                    if(i == code_numberOfLines - 1)
+                    {
+                        error_throwError(code_currentLineNum, "Could not find endWhile statement");
+                        return false;
+                    }
                 }
-            }
-            
-            if(value1.equals(value2))
-            {
-        	code_currentLine++;
-        	
-                while(code_currentLine != lineOfEnd)
-                {
-                    System.out.println("Processing " + code_code[code_currentLine]);
-                    program_processLine();
-                }
-                
-                System.out.println("finished while loop");
-                code_currentLine = lineOfStart;
             }
             else
             {
-        	code_currentLine = lineOfEnd;
+        	code_currentLineNum++;
+        	return true;
             }
         }
         
-        else if(condition_lineEndsWhile(code_currentLine))
+        else if(condition_lineEndsWhile())
         {
-            code_currentLine++;
+            for(int i = code_currentLineNum; i > 0; i--)
+            {
+        	if(code_code[i].startsWith(STARTWHILE))
+        	{
+        	    code_currentLineNum = i;
+        	}
+            }
             return true;
         }
         
         else
         {
-            error_throwError(code_currentLine, "Could not process " + code_code[code_currentLine]);
+            error_throwError(code_currentLineNum, "Could not process " + code_currentLine);
             return false;
         }
           
@@ -646,9 +651,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineIsStart(int line)
+    private boolean condition_lineIsStart()
     {
-	if(code_code[line].equals(STARTCOMMAND))
+	if(code_currentLine.equals(STARTCOMMAND))
         {
             return true;
         }
@@ -658,9 +663,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineIsEnd(int line)
+    private boolean condition_lineIsEnd()
     {
-	if(code_code[line].equals(ENDCOMMAND))
+	if(code_currentLine.equals(ENDCOMMAND))
         {
             return true;
         }
@@ -670,9 +675,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineDeclaresInt(int line)
+    private boolean condition_lineDeclaresInt()
     {        
-        if(code_code[line].startsWith(DECLAREINT))
+        if(code_currentLine.startsWith(DECLAREINT))
         {
             return true;
         }
@@ -682,9 +687,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineDeclaresString(int line)
+    private boolean condition_lineDeclaresString()
     {
-        if(code_code[line].startsWith(DECLARESTRING))
+        if(code_currentLine.startsWith(DECLARESTRING))
         {
             return true;
         }
@@ -694,21 +699,21 @@ public class Program
         }
     }
     
-    private boolean condition_lineDeclaresBoolean(int line)
+    private boolean condition_lineDeclaresBoolean()
     {
-            if(code_code[line].startsWith(DECLAREBOOLEAN))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+        if(code_currentLine.startsWith(DECLAREBOOLEAN))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    private boolean condition_lineDeclaresDouble(int line)
+    private boolean condition_lineDeclaresDouble()
     {
-        if(code_code[line].startsWith(DECLAREDOUBLE))
+        if(code_currentLine.startsWith(DECLAREDOUBLE))
         {
             return true;
         }
@@ -718,9 +723,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineDeletes(int line)
+    private boolean condition_lineDeletes()
     {
-        if(code_code[line].startsWith(DELETE))
+        if(code_currentLine.startsWith(DELETE))
         {
             return true;
         }
@@ -730,9 +735,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineSets(int line)
+    private boolean condition_lineSets()
     {
-        if(code_code[line].startsWith(SET))
+        if(code_currentLine.startsWith(SET))
         {
             return true;
         }
@@ -742,9 +747,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineGets(int line)
+    private boolean condition_lineGets()
     {
-        if(code_code[line].contains(GET))
+        if(code_currentLine.contains(GET))
         {
             return true;
         }
@@ -754,9 +759,9 @@ public class Program
         }
     }
     
-    private boolean condition_linePrints(int line)
+    private boolean condition_linePrints()
     {
-        if(code_code[line].startsWith(PRINT + " "))
+        if(code_currentLine.startsWith(PRINT + " "))
         {
             return true;
         }
@@ -766,9 +771,9 @@ public class Program
         }
     }
     
-    private boolean condition_linePrintsNewLine(int line)
+    private boolean condition_linePrintsNewLine()
     {
-        if(code_code[line].startsWith(PRINTNEWLINE))
+        if(code_currentLine.startsWith(PRINTNEWLINE))
         {
             return true;
         }
@@ -778,9 +783,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineEvaluates(int line)
+    private boolean condition_lineEvaluates()
     {
-        if(code_code[line].contains(EVALUATEEXPRESSION))
+        if(code_currentLine.contains(EVALUATEEXPRESSION))
         {
             return true;
         }
@@ -790,9 +795,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineStartsIf(int line)
+    private boolean condition_lineStartsIf()
     {
-        if(code_code[line].startsWith(STARTIF))
+        if(code_currentLine.startsWith(STARTIF))
         {
             return true;
         }
@@ -802,9 +807,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineEndsIf(int line)
+    private boolean condition_lineEndsIf()
     {
-        if(code_code[line].equals(ENDIF))
+        if(code_currentLine.equals(ENDIF))
         {
             return true;
         }
@@ -814,9 +819,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineStartsWhile(int line)
+    private boolean condition_lineStartsWhile()
     {
-        if(code_code[line].startsWith(STARTWHILE))
+        if(code_currentLine.startsWith(STARTWHILE))
         {
             return true;
         }
@@ -826,9 +831,9 @@ public class Program
         }
     }
     
-    private boolean condition_lineEndsWhile(int line)
+    private boolean condition_lineEndsWhile()
     {
-        if(code_code[line].equals(ENDWHILE))
+        if(code_currentLine.equals(ENDWHILE))
         {
             return true;
         }

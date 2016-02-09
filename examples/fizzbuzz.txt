@@ -1,0 +1,32 @@
+start
+
+int testNum 0
+int signal 0
+
+int limit 150
+
+while get signal 0
+
+set testNum eval get testNum + 1
+
+print get testNum
+print :
+print  
+
+if 0 eval get testNum % 3
+print fizz
+endIf
+
+if 0 eval get testNum % 5
+print buzz
+endIf
+
+printNL
+
+if get testNum get limit
+set signal 1
+endIf
+
+endWhile
+
+end
