@@ -8,8 +8,24 @@ int signal2 0
 
 while get signal1 0
 
+set num1 eval get num1 + 1
+
+while get signal2 0
+
+set num2 eval get num2 + 1
+
 print get num1
+print : 
+print get num2
 printNL
+
+if get num2 10
+set signal2 1
+endIf
+
+endWhile
+
+set signal2 0
 
 if get num1 10
 set signal1 1
