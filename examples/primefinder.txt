@@ -1,0 +1,20 @@
+start
+
+int num1 0
+int num2 0
+
+int signal1 0
+int signal2 0
+
+while get signal1 0
+
+print get num1
+printNL
+
+if get num1 10
+set signal1 1
+endIf
+
+endWhile
+
+end
