@@ -1,0 +1,42 @@
+start
+
+int testNum 1
+int factor 1
+
+boolean signal1 false
+boolean signal2 false
+
+while get signal1 false
+
+set testNum eval get testNum + 1
+
+while get signal2 false
+
+set factor eval get factor + 1
+
+if get testNum get factor
+
+print get testNum
+printNL
+set signal2 true
+
+endIf
+
+if 0 eval get testNum % get factor
+
+set signal2 true
+
+endIf
+
+endWhile
+
+set signal2 false
+set factor 1
+
+if get testNum 200
+set signal1 true
+endIf
+
+endWhile
+
+end
