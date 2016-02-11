@@ -8,6 +8,7 @@ public class Program
     private int code_numberOfLines;
     private int code_currentLineNum;
     private String code_currentLine;
+    private int code_numberOfSteps;
 
     // variable variables
     private Storage var_ints;
@@ -45,6 +46,7 @@ public class Program
         code_rawCode += "\n";
         code_numberOfLines = 0;
         code_currentLineNum = 0;
+        code_numberOfSteps = 0;
 
         var_ints = new Storage(COMMAND_DECLAREINT);
         var_strings = new Storage(COMMAND_DECLARESTRING);
@@ -62,9 +64,9 @@ public class Program
     public void program_preprocess()
     {
         // count number of newline characters in the program
-        for (int i = 0; i < code_rawCode.length(); i++)
+        for(int i = 0; i < code_rawCode.length(); i++)
         {
-            if (code_rawCode.charAt(i) == '\n')
+            if(code_rawCode.charAt(i) == '\n')
             {
                 code_numberOfLines++;
             }
@@ -77,9 +79,9 @@ public class Program
         int lastStringIndex = 0;
         int currentCodeLine = 0;
 
-        for (int i = 0; i < code_rawCode.length(); i++)
+        for(int i = 0; i < code_rawCode.length(); i++)
         {
-            if (code_rawCode.charAt(i) == '\n')
+            if(code_rawCode.charAt(i) == '\n')
             {
                 temp[currentCodeLine] = code_rawCode.substring(lastStringIndex, i);
                 currentCodeLine++;
@@ -90,9 +92,9 @@ public class Program
         code_numberOfLines = 0;
 
         // count number of non-blank, non-comment lines
-        for (int i = 0; i < temp.length; i++)
+        for(int i = 0; i < temp.length; i++)
         {
-            if (!temp[i].equals(""))
+            if(!temp[i].equals(""))
             {
                 code_numberOfLines++;
             }
@@ -101,9 +103,9 @@ public class Program
         code_code = new String[code_numberOfLines];
         int lastCodeIndex = 0;
 
-        for (int i = 0; i < temp.length; i++)
+        for(int i = 0; i < temp.length; i++)
         {
-            if (!temp[i].equals(""))
+            if(!temp[i].equals(""))
             {
                 code_code[lastCodeIndex] = temp[i];
                 lastCodeIndex++;
@@ -113,16 +115,19 @@ public class Program
 
     public void program_process()
     {
-        if (condition_startIsPresent() && condition_endIsPresent())
+        if(condition_startIsPresent() && condition_endIsPresent())
         {
-            while (code_currentLineNum < code_numberOfLines)
+            while(code_currentLineNum < code_numberOfLines)
             {
-                if (!program_processLine())
+                code_numberOfSteps++;
+                
+                if(!program_processLine())
                 {
                     code_currentLineNum = code_numberOfLines;
                 }
             }
 
+            System.out.println("Completed in " + code_numberOfSteps + " steps");
             System.out.println("----------------------------");
         }
     }
@@ -130,24 +135,24 @@ public class Program
     public boolean program_processLine()
     {
         code_currentLine = code_code[code_currentLineNum];
-        System.out.println("Processing " + code_currentLine);
+        //System.out.println("Processing " + code_currentLine);
 
         // start
-        if (condition_lineIsStart())
+        if(condition_lineIsStart())
         {
             code_currentLineNum++;
             return true;
         }
 
         // end
-        if (condition_lineIsEnd())
+        if(condition_lineIsEnd())
         {
             code_currentLineNum++;
             return true;
         }
 
         // GETS
-        while (condition_lineGets())
+        while(condition_lineGets())
         {
             String name = "";
             int index = -1;
@@ -156,7 +161,7 @@ public class Program
             index = code_currentLine.indexOf(COMMAND_GET);
             secondSpaceIndex = code_currentLine.indexOf(' ', index + COMMAND_GET.length() + 1);
 
-            if (secondSpaceIndex == -1)
+            if(secondSpaceIndex == -1)
             {
                 name = code_currentLine.substring(index + COMMAND_GET.length() + 1);
             }
@@ -165,34 +170,34 @@ public class Program
                 name = code_currentLine.substring(index + COMMAND_GET.length() + 1, secondSpaceIndex);
             }
 
-            if (var_DATA.nameIsPresent(name))
+            if(var_DATA.nameIsPresent(name))
             {
                 String firstHalf = code_currentLine.substring(0, index);
                 String secondHalf = "";
 
-                if (!(secondSpaceIndex == -1))
+                if(!(secondSpaceIndex == -1))
                 {
                     secondHalf = code_currentLine.substring(secondSpaceIndex);
                 }
 
                 code_currentLine = firstHalf;
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREINT))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
                 {
                     code_currentLine += var_ints.get(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+                if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
                 {
                     code_currentLine += var_strings.get(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
                 {
                     code_currentLine += var_booleans.get(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
                 {
                     code_currentLine += var_doubles.get(name);
                 }
@@ -208,7 +213,7 @@ public class Program
         }
 
         // EVALUATES
-        if (condition_lineEvaluates())
+        if(condition_lineEvaluates())
         {
             String input = "";
             int index = 0;
@@ -221,21 +226,21 @@ public class Program
         }
 
         // COMMAND_DECLAREINT
-        if (condition_lineDeclaresInt())
+        if(condition_lineDeclaresInt())
         {
             String name = "";
             String value = "";
 
-            for (int i = COMMAND_DECLAREINT.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREINT.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     name = code_currentLine.substring(COMMAND_DECLAREINT.length() + 1, i);
                     value = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!var_DATA.nameIsPresent(name))
+            if(!var_DATA.nameIsPresent(name))
             {
                 try
                 {
@@ -246,7 +251,7 @@ public class Program
                     code_currentLineNum++;
                     return true;
                 }
-                catch (NumberFormatException e)
+                catch(NumberFormatException e)
                 {
                     error_throwError(code_currentLineNum, value + " is not an int");
                     return false;
@@ -261,21 +266,21 @@ public class Program
         }
 
         // COMMAND_DECLARESTRING
-        else if (condition_lineDeclaresString())
+        else if(condition_lineDeclaresString())
         {
             String name = "";
             String value = "";
 
-            for (int i = COMMAND_DECLARESTRING.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLARESTRING.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     name = code_currentLine.substring(COMMAND_DECLARESTRING.length() + 1, i);
                     value = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!var_DATA.nameIsPresent(name))
+            if(!var_DATA.nameIsPresent(name))
             {
                 var_strings.add(name, value);
                 var_DATA.add(name, COMMAND_DECLARESTRING);
@@ -293,23 +298,23 @@ public class Program
         }
 
         // COMMAND_DECLAREBOOLEAN
-        else if (condition_lineDeclaresBoolean())
+        else if(condition_lineDeclaresBoolean())
         {
             String name = "";
             String value = "";
 
-            for (int i = COMMAND_DECLAREBOOLEAN.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREBOOLEAN.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     name = code_currentLine.substring(COMMAND_DECLAREBOOLEAN.length() + 1, i);
                     value = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!var_DATA.nameIsPresent(name))
+            if(!var_DATA.nameIsPresent(name))
             {
-                if (value.equals("true") || value.equals("false"))
+                if(value.equals("true") || value.equals("false"))
                 {
                     var_booleans.add(name, Boolean.parseBoolean(value));
                     var_DATA.add(name, COMMAND_DECLAREBOOLEAN);
@@ -333,21 +338,21 @@ public class Program
         }
 
         // COMMAND_DECLAREDOUBLE
-        else if (condition_lineDeclaresDouble())
+        else if(condition_lineDeclaresDouble())
         {
             String name = "";
             String value = "";
 
-            for (int i = COMMAND_DECLAREDOUBLE.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_DECLAREDOUBLE.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     name = code_currentLine.substring(COMMAND_DECLAREDOUBLE.length() + 1, i);
                     value = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!var_DATA.nameIsPresent(name))
+            if(!var_DATA.nameIsPresent(name))
             {
                 try
                 {
@@ -358,7 +363,7 @@ public class Program
                     code_currentLineNum++;
                     return true;
                 }
-                catch (NumberFormatException e)
+                catch(NumberFormatException e)
                 {
                     error_throwError(code_currentLineNum, value + " is not a double");
                     return false;
@@ -373,28 +378,28 @@ public class Program
         }
 
         // DELETES
-        else if (condition_lineDeletes())
+        else if(condition_lineDeletes())
         {
             String name = code_currentLine.substring(COMMAND_DELETE.length() + 1);
 
-            if (var_DATA.nameIsPresent(name))
+            if(var_DATA.nameIsPresent(name))
             {
-                if (var_DATA.get(name).equals(COMMAND_DECLAREINT))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
                 {
                     var_ints.delete(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+                if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
                 {
                     var_strings.delete(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
                 {
                     var_booleans.delete(name);
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
                 {
                     var_doubles.delete(name);
                 }
@@ -414,23 +419,23 @@ public class Program
         }
 
         // SETS
-        else if (condition_lineSets())
+        else if(condition_lineSets())
         {
             String name = "";
             String value = "";
 
-            for (int i = COMMAND_SET.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_SET.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     name = code_currentLine.substring(COMMAND_SET.length() + 1, i);
                     value = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (var_DATA.nameIsPresent(name))
+            if(var_DATA.nameIsPresent(name))
             {
-                if (var_DATA.get(name).equals(COMMAND_DECLAREINT))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREINT))
                 {
                     try
                     {
@@ -440,14 +445,14 @@ public class Program
                         code_currentLineNum++;
                         return true;
                     }
-                    catch (NumberFormatException e)
+                    catch(NumberFormatException e)
                     {
                         error_throwError(code_currentLineNum, value + " is not an int");
                         return false;
                     }
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLARESTRING))
+                if(var_DATA.get(name).equals(COMMAND_DECLARESTRING))
                 {
                     var_strings.set(name, value);
 
@@ -456,9 +461,9 @@ public class Program
                     return true;
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREBOOLEAN))
                 {
-                    if (value.equals("true") || value.equals("false"))
+                    if(value.equals("true") || value.equals("false"))
                     {
                         var_booleans.set(name, Boolean.parseBoolean(value));
 
@@ -473,7 +478,7 @@ public class Program
                     }
                 }
 
-                if (var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
+                if(var_DATA.get(name).equals(COMMAND_DECLAREDOUBLE))
                 {
                     try
                     {
@@ -483,7 +488,7 @@ public class Program
                         code_currentLineNum++;
                         return true;
                     }
-                    catch (NumberFormatException e)
+                    catch(NumberFormatException e)
                     {
                         error_throwError(code_currentLineNum, value + " is not an double");
                         return false;
@@ -499,7 +504,7 @@ public class Program
         }
 
         // PRINTS
-        else if (condition_linePrints())
+        else if(condition_linePrints())
         {
             String value = code_currentLine.substring(COMMAND_PRINT.length() + 1);
             GUIHandler.update_output(value);
@@ -508,7 +513,7 @@ public class Program
             return true;
         }
 
-        else if (condition_linePrintsNewLine())
+        else if(condition_linePrintsNewLine())
         {
             GUIHandler.update_output("\n");
 
@@ -517,31 +522,31 @@ public class Program
         }
 
         // IF
-        else if (condition_lineStartsIf())
+        else if(condition_lineStartsIf())
         {
             String value1 = "";
             String value2 = "";
 
-            for (int i = COMMAND_STARTIF.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_STARTIF.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     value1 = code_currentLine.substring(COMMAND_STARTIF.length() + 1, i);
                     value2 = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!value1.equals(value2))
+            if(!value1.equals(value2))
             {
-                for (int i = code_currentLineNum; i < code_numberOfLines; i++)
+                for(int i = code_currentLineNum; i < code_numberOfLines; i++)
                 {
-                    if (code_code[i].equals(COMMAND_ENDIF))
+                    if(code_code[i].equals(COMMAND_ENDIF))
                     {
                         code_currentLineNum = i + 1;
                         return true;
                     }
 
-                    if (i == code_numberOfLines - 1)
+                    if(i == code_numberOfLines - 1)
                     {
                         error_throwError(code_currentLineNum, "Could not find endIf statement");
                         return false;
@@ -555,38 +560,52 @@ public class Program
             }
         }
 
-        else if (condition_lineEndsIf())
+        else if(condition_lineEndsIf())
         {
             code_currentLineNum++;
             return true;
         }
 
         // while
-        else if (condition_lineStartsWhile())
+        else if(condition_lineStartsWhile())
         {
             String value1 = "";
             String value2 = "";
 
-            for (int i = COMMAND_STARTWHILE.length() + 1; i < code_currentLine.length(); i++)
+            for(int i = COMMAND_STARTWHILE.length() + 1; i < code_currentLine.length(); i++)
             {
-                if (code_currentLine.charAt(i) == ' ')
+                if(code_currentLine.charAt(i) == ' ')
                 {
                     value1 = code_currentLine.substring(COMMAND_STARTWHILE.length() + 1, i);
                     value2 = code_currentLine.substring(i + 1);
                 }
             }
 
-            if (!value1.equals(value2))
+            if(!value1.equals(value2))
             {
-                for (int i = code_currentLineNum; i < code_numberOfLines; i++)
+                int whileCount = 0;
+
+                for(int i = code_currentLineNum + 1; i < code_numberOfLines; i++)
                 {
-                    if (code_code[i].equals(COMMAND_ENDWHILE))
+                    if(code_code[i].startsWith(COMMAND_STARTWHILE))
                     {
-                        code_currentLineNum = i + 1;
-                        return true;
+                        whileCount++;
                     }
 
-                    if (i == code_numberOfLines - 1)
+                    if(code_code[i].equals(COMMAND_ENDWHILE))
+                    {
+                        if(whileCount == 0)
+                        {
+                            code_currentLineNum = i + 1;
+                            return true;
+                        }
+                        else
+                        {
+                            whileCount--;
+                        }
+                    }
+
+                    if(i == code_numberOfLines - 1)
                     {
                         error_throwError(code_currentLineNum, "Could not find endWhile statement");
                         return false;
@@ -600,13 +619,29 @@ public class Program
             }
         }
 
-        else if (condition_lineEndsWhile())
+        else if(condition_lineEndsWhile())
         {
-            for (int i = code_currentLineNum; i > 0; i--)
+            int whileCount = 0;
+
+            for(int i = code_currentLineNum - 1; i > 0; i--)
             {
-                if (code_code[i].startsWith(COMMAND_STARTWHILE))
+                if(code_code[i].equals(COMMAND_ENDWHILE))
                 {
-                    code_currentLineNum = i;
+                    whileCount++;
+                }
+
+                if(code_code[i].startsWith(COMMAND_STARTWHILE))
+                {
+                    if(whileCount == 0)
+                    {
+                        code_currentLineNum = i;
+                        return true;
+                    }
+                    else
+                    {
+                        whileCount--;
+                    }
+
                 }
             }
 
@@ -624,7 +659,7 @@ public class Program
 
     public boolean program_isDone()
     {
-        if (code_currentLineNum == code_numberOfLines)
+        if(code_currentLineNum == code_numberOfLines)
         {
             return true;
         }
@@ -638,7 +673,7 @@ public class Program
     {
         GUIHandler.update_variables_clear();
 
-        for (int i = 0; i < var_variables.length; i++)
+        for(int i = 0; i < var_variables.length; i++)
         {
             GUIHandler.update_variables(var_variables[i].displayVars());
         }
@@ -646,7 +681,7 @@ public class Program
 
     private boolean condition_startIsPresent()
     {
-        if (code_code[0].equals(COMMAND_START))
+        if(code_code[0].equals(COMMAND_START))
         {
             return true;
         }
@@ -659,7 +694,7 @@ public class Program
 
     private boolean condition_endIsPresent()
     {
-        if (code_code[code_code.length - 1].equals(COMMAND_END))
+        if(code_code[code_code.length - 1].equals(COMMAND_END))
         {
             return true;
         }
@@ -672,7 +707,7 @@ public class Program
 
     private boolean condition_lineIsStart()
     {
-        if (code_currentLine.equals(COMMAND_START))
+        if(code_currentLine.equals(COMMAND_START))
         {
             return true;
         }
@@ -684,7 +719,7 @@ public class Program
 
     private boolean condition_lineIsEnd()
     {
-        if (code_currentLine.equals(COMMAND_END))
+        if(code_currentLine.equals(COMMAND_END))
         {
             return true;
         }
@@ -696,7 +731,7 @@ public class Program
 
     private boolean condition_lineDeclaresInt()
     {
-        if (code_currentLine.startsWith(COMMAND_DECLAREINT))
+        if(code_currentLine.startsWith(COMMAND_DECLAREINT))
         {
             return true;
         }
@@ -708,7 +743,7 @@ public class Program
 
     private boolean condition_lineDeclaresString()
     {
-        if (code_currentLine.startsWith(COMMAND_DECLARESTRING))
+        if(code_currentLine.startsWith(COMMAND_DECLARESTRING))
         {
             return true;
         }
@@ -720,7 +755,7 @@ public class Program
 
     private boolean condition_lineDeclaresBoolean()
     {
-        if (code_currentLine.startsWith(COMMAND_DECLAREBOOLEAN))
+        if(code_currentLine.startsWith(COMMAND_DECLAREBOOLEAN))
         {
             return true;
         }
@@ -732,7 +767,7 @@ public class Program
 
     private boolean condition_lineDeclaresDouble()
     {
-        if (code_currentLine.startsWith(COMMAND_DECLAREDOUBLE))
+        if(code_currentLine.startsWith(COMMAND_DECLAREDOUBLE))
         {
             return true;
         }
@@ -744,7 +779,7 @@ public class Program
 
     private boolean condition_lineDeletes()
     {
-        if (code_currentLine.startsWith(COMMAND_DELETE))
+        if(code_currentLine.startsWith(COMMAND_DELETE))
         {
             return true;
         }
@@ -756,7 +791,7 @@ public class Program
 
     private boolean condition_lineSets()
     {
-        if (code_currentLine.startsWith(COMMAND_SET))
+        if(code_currentLine.startsWith(COMMAND_SET))
         {
             return true;
         }
@@ -768,7 +803,7 @@ public class Program
 
     private boolean condition_lineGets()
     {
-        if (code_currentLine.contains(COMMAND_GET))
+        if(code_currentLine.contains(COMMAND_GET))
         {
             return true;
         }
@@ -780,7 +815,7 @@ public class Program
 
     private boolean condition_linePrints()
     {
-        if (code_currentLine.startsWith(COMMAND_PRINT + " "))
+        if(code_currentLine.startsWith(COMMAND_PRINT + " "))
         {
             return true;
         }
@@ -792,7 +827,7 @@ public class Program
 
     private boolean condition_linePrintsNewLine()
     {
-        if (code_currentLine.startsWith(COMMAND_PRINTNEWLINE))
+        if(code_currentLine.startsWith(COMMAND_PRINTNEWLINE))
         {
             return true;
         }
@@ -804,7 +839,7 @@ public class Program
 
     private boolean condition_lineEvaluates()
     {
-        if (code_currentLine.contains(COMMAND_EVALUATEEXPRESSION))
+        if(code_currentLine.contains(COMMAND_EVALUATEEXPRESSION))
         {
             return true;
         }
@@ -816,7 +851,7 @@ public class Program
 
     private boolean condition_lineStartsIf()
     {
-        if (code_currentLine.startsWith(COMMAND_STARTIF))
+        if(code_currentLine.startsWith(COMMAND_STARTIF))
         {
             return true;
         }
@@ -828,7 +863,7 @@ public class Program
 
     private boolean condition_lineEndsIf()
     {
-        if (code_currentLine.equals(COMMAND_ENDIF))
+        if(code_currentLine.equals(COMMAND_ENDIF))
         {
             return true;
         }
@@ -840,7 +875,7 @@ public class Program
 
     private boolean condition_lineStartsWhile()
     {
-        if (code_currentLine.startsWith(COMMAND_STARTWHILE))
+        if(code_currentLine.startsWith(COMMAND_STARTWHILE))
         {
             return true;
         }
@@ -852,7 +887,7 @@ public class Program
 
     private boolean condition_lineEndsWhile()
     {
-        if (code_currentLine.equals(COMMAND_ENDWHILE))
+        if(code_currentLine.equals(COMMAND_ENDWHILE))
         {
             return true;
         }
