@@ -1,0 +1,30 @@
+start
+
+int numBottles 99
+boolean signal false
+
+while get signal false
+
+print get numBottles 
+print bottles of beer on the wall.
+printNL
+print get numBottles 
+print bottles of beer.
+printNL
+print Take one down, pass it around,
+printNL
+
+set numBottles eval get numBottles - 1
+
+print get numBottles 
+print bottles of beer on the wall.
+printNL
+printNL
+
+if get numBottles 0
+set signal true
+endIf
+
+endWhile
+
+end
