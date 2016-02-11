@@ -1,35 +1,40 @@
 start
 
-int num1 0
-int num2 0
+int testNum 1
+int factor 1
 
-int signal1 0
-int signal2 0
+boolean signal1 false
+boolean signal2 false
 
-while get signal1 0
+while get signal1 false
 
-set num1 eval get num1 + 1
+set testNum eval get testNum + 1
 
-while get signal2 0
+while get signal2 false
 
-set num2 eval get num2 + 1
+set factor eval get factor + 1
 
-print get num1
-print : 
-print get num2
+if get testNum get factor
+
+print get testNum
 printNL
+set signal2 true
 
-if get num2 3
-set signal2 1
+endIf
+
+if 0 eval get testNum % get factor
+
+set signal2 true
+
 endIf
 
 endWhile
 
-set signal2 0
-set num2 0
+set signal2 false
+set factor 1
 
-if get num1 3
-set signal1 1
+if get testNum 200
+set signal1 true
 endIf
 
 endWhile
