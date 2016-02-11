@@ -1,5 +1,7 @@
 start
 
+int maxNum 200
+
 int testNum 1
 int factor 1
 
@@ -33,7 +35,7 @@ endWhile
 set signal2 false
 set factor 1
 
-if get testNum 200
+if get testNum get maxNum
 set signal1 true
 endIf
 
