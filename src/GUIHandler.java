@@ -75,7 +75,7 @@ public class GUIHandler
     {
         component_input = new JTextArea();
         component_output = new JTextArea();
-        component_variables = new JTextArea();
+        component_variables = new JTextArea();        
 
         component_output.setEditable(false);
         component_variables.setEditable(false);
@@ -127,6 +127,8 @@ public class GUIHandler
             public void actionPerformed(ActionEvent e)
             {
                 update_output_clear();
+                update_variables_clear();
+                
                 program_currentProgram = null;
                 program_currentProgram = new Program(component_input.getText());
                 program_currentProgram.program_preprocess();
@@ -139,13 +141,28 @@ public class GUIHandler
             @Override
             public void actionPerformed(ActionEvent arg0)
             {
-                if (program_currentProgram == null | program_currentProgram.program_isDone())
+                try
                 {
+                    program_currentProgram.program_processLine();
+                }
+                catch(NullPointerException e)
+                {
+                    update_output_clear();
+                    update_variables_clear();
+                    
                     program_currentProgram = new Program(component_input.getText());
                     program_currentProgram.program_preprocess();
+                    program_currentProgram.program_processLine();
                 }
-
-                program_currentProgram.program_processLine();
+                catch(ArrayIndexOutOfBoundsException e)
+                {
+                    update_output_clear();
+                    update_variables_clear();
+                    
+                    program_currentProgram = new Program(component_input.getText());
+                    program_currentProgram.program_preprocess();
+                    program_currentProgram.program_processLine();
+                }
             }
         });
 
@@ -155,14 +172,14 @@ public class GUIHandler
         menu_file.add(menu_file_save);
         menu_file.add(menu_file_saveas);
         menu_file.add(menu_file_open);
-        menu_file.add(menu_file_clear);
-
-        menu_program.add(menu_program_run);
-        menu_program.add(menu_program_stepbystep);
+        menu_file.add(menu_file_clear);      
 
         menu_mainBar.add(menu_file);
         menu_mainBar.add(menu_edit);
         menu_mainBar.add(menu_program);
+        
+        menu_mainBar.add(menu_program_run);
+        menu_mainBar.add(menu_program_stepbystep);
     }
 
     private static void instantiate_constraints()
