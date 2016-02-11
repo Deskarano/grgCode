@@ -19,15 +19,16 @@ print :
 print get num2
 printNL
 
-if get num2 10
+if get num2 3
 set signal2 1
 endIf
 
 endWhile
 
 set signal2 0
+set num2 0
 
-if get num1 10
+if get num1 3
 set signal1 1
 endIf
 
