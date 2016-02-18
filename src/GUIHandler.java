@@ -3,6 +3,7 @@ package grgCode;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 
 public class GUIHandler
 {
@@ -76,6 +77,9 @@ public class GUIHandler
         component_input = new JTextArea();
         component_output = new JTextArea();
         component_variables = new JTextArea();        
+        
+        ((DefaultCaret) component_output.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+        ((DefaultCaret) component_variables.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
         component_output.setEditable(false);
         component_variables.setEditable(false);
@@ -116,7 +120,9 @@ public class GUIHandler
             @Override
             public void actionPerformed(ActionEvent arg0)
             {
-                component_input.setText("");
+                update_input_clear();
+                update_output_clear();
+                update_variables_clear();
             }
 
         });
@@ -129,10 +135,22 @@ public class GUIHandler
                 update_output_clear();
                 update_variables_clear();
                 
-                program_currentProgram = null;
-                program_currentProgram = new Program(component_input.getText());
-                program_currentProgram.program_preprocess();
-                program_currentProgram.program_process();
+                new SwingWorker<String, String>()
+                {
+
+					@Override
+					protected String doInBackground() throws Exception
+					{
+						program_currentProgram = null;
+		                program_currentProgram = new Program(component_input.getText());
+		                program_currentProgram.program_preprocess();
+		                program_currentProgram.program_process();
+		                
+						return null;
+					}
+                	
+                }.execute();
+                
             }
         });
 
@@ -225,6 +243,11 @@ public class GUIHandler
 
         component_mainFrame.pack();
         component_mainFrame.setVisible(true);
+    }
+    
+    public static void update_input_clear()
+    {
+    	component_input.setText("");
     }
 
     public static void update_output(String update)
