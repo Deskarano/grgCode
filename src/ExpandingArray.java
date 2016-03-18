@@ -42,15 +42,7 @@ public class ExpandingArray
 
     public void deleteObject(Object obj)
     {
-        int index = -1;
-
-        for (int i = 0; i < length; i++)
-        {
-            if (data[i].equals(obj))
-            {
-                index = i;
-            }
-        }
+        int index = getIndex(obj);
 
         if (index != -1)
         {
